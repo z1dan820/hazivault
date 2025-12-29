@@ -1,0 +1,20 @@
+<h2>Setup HaziVault</h2>
+<form id="form">
+  <input name="username" placeholder="Username" required>
+  <input type="password" name="password" placeholder="Password" required>
+  <button>Setup</button>
+</form>
+
+<script>
+document.getElementById('form').onsubmit = async e => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const data = Object.fromEntries(fd);
+  const res = await fetch('/api/auth/register', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(data)
+  });
+  alert((await res.json()).success ? 'Success' : 'Failed');
+};
+</script>
