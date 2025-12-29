@@ -21,3 +21,6 @@ app.use('/', express.static(path.join(__dirname, '../web')));
 app.listen(PORT, () => {
   console.log(`HaziVault running on http://localhost:${PORT}`);
 });
+app.get('/api/ping', (req, res) => {
+  res.json({ status: 'ok' });
+});
