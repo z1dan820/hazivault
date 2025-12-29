@@ -1,22 +1,20 @@
+
 <h2>Login HaziVault</h2>
-<form id="loginForm">
-  <input name="username" placeholder="Username" required>
-  <input type="password" name="password" placeholder="Password" required>
+<form id="f">
+  <input name="username" required>
+  <input type="password" name="password" required>
   <button>Login</button>
 </form>
 
 <script>
-document.getElementById('loginForm').onsubmit = async e => {
+document.getElementById('f').onsubmit = async e => {
   e.preventDefault();
-  const fd = new FormData(e.target);
-  const data = Object.fromEntries(fd);
-  const res = await fetch('/api/auth/login', {
+  const data = Object.fromEntries(new FormData(e.target));
+  const r = await fetch('/api/auth/login', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify(data)
   });
-  const json = await res.json();
-  alert(json.success ? 'Login successful' : 'Login failed');
-  if (json.success) window.location = '/';
+  if ((await r.json()).success) location.href = '/';
 };
 </script>
