@@ -13,3 +13,7 @@ app.get('/api/ping', (req, res) => {
 app.listen(PORT, () => {
   console.log(`HaziVault running at http://localhost:${PORT}`);
 });
+
+const authRoutes = require('./auth');
+app.use(express.json());
+app.use('/api/auth', authRoutes);
