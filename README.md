@@ -1,7 +1,3 @@
-![Brand](images/hazi.png)
-
-
-
 # 🚀 HaziVault NAS System
 
 ![HaziVault Logo](images/hazi.png)
