@@ -1,8 +1,10 @@
+
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const fsp = require('fs').promises;
 const db = require('./db');
 const { getStorageInfo } = require('./storage');
 const bcrypt = require('bcryptjs');
@@ -13,172 +15,184 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../web')));
-// Serve file uploads agar bisa di-preview/download
-app.use('/uploads', express.static(path.join(__dirname, '../data/uploads')));
-app.use('/images', express.static(path.join(__dirname, '../images')));
 
 // --- Setup Storage Paths ---
-const dataDir = path.join(__dirname, '../data');
-const uploadDir = path.join(dataDir, 'uploads');
+const UPLOAD_DIR = path.join(__dirname, '../data/uploads');
+fs.mkdirSync(UPLOAD_DIR, { recursive: true }); // Ensure base upload directory exists
 
-// Pastikan folder uploads ada saat start
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+// Serve file uploads so they can be previewed/downloaded
+app.use('/uploads', express.static(UPLOAD_DIR));
+app.use('/images', express.static(path.join(__dirname, '../images')));
 
-// Konfigurasi Multer (Upload)
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        // TODO: Nanti bisa dikembangkan untuk support sub-folder upload
-        cb(null, uploadDir) 
-    },
-    filename: (req, file, cb) => {
-        // Tambah timestamp agar nama file unik
-        cb(null, Date.now() + '-' + file.originalname)
+// --- Security Helper ---
+// Resolves a user-provided path against the UPLOAD_DIR and ensures it's safe.
+function getSafePath(userPath) {
+    if (!userPath) {
+        return UPLOAD_DIR;
     }
-});
-const upload = multer({ storage });
+    const resolvedPath = path.join(UPLOAD_DIR, userPath);
+    // Security check: Ensure the resolved path is still within the upload directory
+    if (!resolvedPath.startsWith(UPLOAD_DIR)) {
+        throw new Error('Access denied. Path is outside of the allowed directory.');
+    }
+    return resolvedPath;
+}
 
+// --- Multer Configuration for Uploads ---
+// We save to a temporary directory first, then move the file to the correct location in the handler.
+const upload = multer({ dest: require('os').tmpdir() });
 
 // ==============================
 // API ROUTES
 // ==============================
 
 // --- AUTH ---
-app.post('/api/login', (req, res) => {
+app.post('/api/auth/login', (req, res) => {
     const { username, password } = req.body;
     db.get(`SELECT * FROM users WHERE username = ?`, [username], async (err, user) => {
-        if (err) return res.status(500).json({ error: err.message });
-        if (!user) return res.status(400).json({ error: "User not found" });
+        if (err) return res.status(500).json({ success: false, message: err.message });
+        if (!user) return res.status(400).json({ success: false, message: "User not found" });
 
         const validPass = await bcrypt.compare(password, user.password);
-        if (!validPass) return res.status(400).json({ error: "Invalid password" });
+        if (!validPass) return res.status(400).json({ success: false, message: "Invalid password" });
 
-        res.json({ message: "Login success", user: { id: user.id, username: user.username } });
+        res.json({ success: true, user: { id: user.id, username: user.username } });
     });
 });
 
 app.post('/api/register', async (req, res) => {
-    // Cek apakah user admin sudah ada (untuk keamanan sederhana)
     db.get("SELECT count(*) as count FROM users", async (err, row) => {
         if (row.count > 0) {
-             // Jika sudah ada user, anggap ini setup kedua kali dan tolak
-             // (Hapus blok ini jika ingin multi-user register bebas)
-             return res.status(403).json({ error: "System already initialized." });
+             return res.status(403).json({ message: "System already initialized." });
         }
 
         const { username, password } = req.body;
-        if(!username || !password) return res.status(400).json({error: "Missing fields"});
+        if(!username || !password) return res.status(400).json({message: "Missing fields"});
         
         const hash = await bcrypt.hash(password, 10);
         db.run(`INSERT INTO users (username, password) VALUES (?, ?)`, [username, hash], function(err) {
-            if (err) return res.status(500).json({ error: "Error registering user" });
+            if (err) return res.status(500).json({ message: "Error registering user" });
             res.json({ message: "User registered successfully" });
         });
     });
 });
 
-
 // --- SYSTEM INFO ---
 app.get('/api/storage', async (req, res) => {
-    const disks = await getStorageInfo();
-    res.json(disks);
+    try {
+        const disks = await getStorageInfo();
+        res.json(disks);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to get storage info' });
+    }
 });
 
 
 // --- FILE OPERATIONS ---
 
-// 1. List Files (Update: Deteksi Folder)
-app.get('/api/files', (req, res) => {
-    // TODO: Nanti tambahkan query param ?path= untuk navigasi subfolder
-    const currentPath = uploadDir; 
+// List Files & Folders
+app.get('/api/files', async (req, res) => {
+    try {
+        const userPath = req.query.path || '';
+        const targetPath = getSafePath(userPath);
 
-    fs.readdir(currentPath, { withFileTypes: true }, (err, entries) => {
-        if (err) return res.status(500).json({ error: "Cannot scan directory" });
+        const entries = await fsp.readdir(targetPath, { withFileTypes: true });
         
-        const fileInfos = entries.map(entry => {
-            const fullPath = path.join(currentPath, entry.name);
-            let stats;
-            try { stats = fs.statSync(fullPath); } catch(e) { stats = {size:0, birthtime: new Date()}}
-
+        const fileInfos = await Promise.all(entries.map(async (entry) => {
+            const stats = await fsp.stat(path.join(targetPath, entry.name)).catch(() => ({ size: 0, birthtime: new Date() }));
             return {
                 name: entry.name,
                 isDir: entry.isDirectory(),
                 size: entry.isDirectory() ? '-' : (stats.size / 1024 / 1024).toFixed(2) + ' MB',
-                created: stats.birthtime,
-                // Ambil ekstensi jika file, jika folder kosongkan
-                type: entry.isDirectory() ? 'DIR' : path.extname(entry.name).toLowerCase()
+                type: entry.isDirectory() ? 'DIR' : path.extname(entry.name).toLowerCase(),
             };
-        });
-        
-        // Sort: Folder di atas, file di bawah
-        fileInfos.sort((a, b) => (a.isDir === b.isDir ? 0 : a.isDir ? -1 : 1));
+        }));
 
         res.json(fileInfos);
-    });
-});
-
-// 2. Upload File
-app.post('/api/upload', upload.single('file'), (req, res) => {
-    if (!req.file) return res.status(400).send('No file uploaded.');
-    res.json({ message: 'File uploaded successfully', file: req.file });
-});
-
-// 3. Create Folder (NEW FEATURE)
-app.post('/api/create-folder', (req, res) => {
-    const { folderName } = req.body;
-    if (!folderName) return res.status(400).json({ error: "Folder name required" });
-
-    // Security: Gunakan basename untuk mencegah directory traversal (../)
-    const safeName = path.basename(folderName);
-    const newFolderPath = path.join(uploadDir, safeName);
-
-    if (fs.existsSync(newFolderPath)) {
-        return res.status(400).json({ error: "Folder already exists" });
-    }
-
-    try {
-        fs.mkdirSync(newFolderPath);
-        res.json({ message: `Folder '${safeName}' created` });
     } catch (error) {
-        res.status(500).json({ error: "Failed to create folder: " + error.message });
+        console.error('File listing error:', error);
+        res.status(500).json({ error: error.message || "Cannot scan directory" });
     }
 });
 
-// 4. Delete File/Folder
-app.post('/api/delete', (req, res) => {
-    const { filename } = req.body;
-    // Security: basename penting disini
-    const safeName = path.basename(filename);
-    const filePath = path.join(uploadDir, safeName);
-
-    if (!fs.existsSync(filePath)) {
-        return res.status(404).json({ error: "File/Folder not found" });
+// Upload File(s) to a specific path
+app.post('/api/upload', upload.array('file'), async (req, res) => {
+    if (!req.files || req.files.length === 0) {
+        return res.status(400).send({ error: 'No files were uploaded.' });
     }
 
     try {
-        const stats = fs.statSync(filePath);
-        if (stats.isDirectory()) {
-            // Hapus folder (harus kosong, atau gunakan {recursive: true} untuk paksa hapus isi)
-            fs.rmdirSync(filePath); 
-        } else {
-            // Hapus file
-            fs.unlinkSync(filePath);
+        const userPath = req.body.path || '';
+        const destinationPath = getSafePath(userPath);
+        
+        // Ensure the destination subfolder exists
+        await fsp.mkdir(destinationPath, { recursive: true });
+
+        for (const file of req.files) {
+            const finalPath = path.join(destinationPath, file.originalname);
+            await fsp.rename(file.path, finalPath); // Move file from temp dir to final destination
         }
-        res.json({ message: "Deleted successfully" });
+
+        res.json({ message: 'Files uploaded successfully' });
     } catch (error) {
-        // Error biasanya jika menghapus folder yg ada isinya tanpa recursive
-        res.status(500).json({ error: "Delete failed. (If deleting folder, make sure it's empty)" });
+        console.error('Upload error:', error);
+        res.status(500).json({ error: error.message || 'Failed to process file upload.' });
     }
 });
 
+// Create a Folder at a specific path
+app.post('/api/create-folder', async (req, res) => {
+    try {
+        const { folderName } = req.body; // e.g., 'new_folder' or 'existing_folder/new_folder'
+        if (!folderName) {
+            return res.status(400).json({ error: "Folder name is required" });
+        }
+
+        const newFolderPath = getSafePath(folderName);
+
+        if (fs.existsSync(newFolderPath)) {
+            return res.status(400).json({ error: "Folder already exists" });
+        }
+
+        await fsp.mkdir(newFolderPath, { recursive: true });
+        res.json({ message: `Folder '${path.basename(folderName)}' created` });
+    } catch (error) {
+        res.status(500).json({ error: error.message || "Failed to create folder" });
+    }
+});
+
+// Delete a File or Folder at a specific path
+app.post('/api/delete', async (req, res) => {
+    try {
+        const { filename } = req.body; // e.g., 'file.txt' or 'folder_name'
+        if (!filename) {
+            return res.status(400).json({ error: 'Filename is required' });
+        }
+
+        const itemPath = getSafePath(filename);
+
+        if (!fs.existsSync(itemPath)) {
+            return res.status(404).json({ error: "File or folder not found" });
+        }
+
+        // Use recursive delete for both files and directories (and their contents)
+        await fsp.rm(itemPath, { recursive: true, force: true });
+
+        res.json({ message: "Item deleted successfully" });
+    } catch (error) {
+        console.error('Delete error:', error);
+        res.status(500).json({ error: error.message || 'Failed to delete the item.' });
+    }
+});
 
 // --- SERVE HTML ---
-// Redirect root ke dashboard jika sudah login (cek sederhana di client nanti)
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, '../web/index.html')));
-app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, '../web/dashboard.html')));
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../web/index.html'));
+});
 
 // Start Server
 app.listen(PORT, () => {
     console.log(`🚀 HaziVault NAS running on http://localhost:${PORT}`);
-    console.log(`📁 Data Directory: ${dataDir}`);
+    console.log(`- Data Directory: ${UPLOAD_DIR}`);
 });
-                                                    
+                             
