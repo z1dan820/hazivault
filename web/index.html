@@ -1,51 +1,16 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HaziVault // Login</title>
-    <link rel="stylesheet" href="assets/style.css">
+    <title>HaziVault</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="/assets/style.css">
 </head>
 <body>
-    <div class="auth-container">
-        <div class="auth-box">
-            <img src="/images/hazi.png" alt="Logo" style="width:60px; margin-bottom:20px;">
-            <h2>HAZI_VAULT</h2>
-            <p style="font-size: 0.8rem; color: #888; margin-bottom: 20px;">SECURE STORAGE SYSTEM</p>
-            
-            <form id="loginForm">
-                <input type="text" id="username" placeholder="USERNAME" required>
-                <input type="password" id="password" placeholder="PASSWORD" required>
-                <button type="submit">ACCESS SYSTEM</button>
-            </form>
-            <p id="msg" style="margin-top:10px; color: red; font-size: 0.8rem;"></p>
-            <p style="margin-top: 20px; font-size: 0.7rem;">
-                Don't have an account? <a href="setup.html" style="color: var(--accent)">Setup Here</a>
-            </p>
-        </div>
+    <div id="app">
+        <!-- App content will be rendered here -->
     </div>
-
-    <script>
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const u = document.getElementById('username').value;
-            const p = document.getElementById('password').value;
-
-            const res = await fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: u, password: p })
-            });
-
-            const data = await res.json();
-            if (res.ok) {
-                localStorage.setItem('haziUser', JSON.stringify(data.user));
-                window.location.href = 'dashboard.html';
-            } else {
-                document.getElementById('msg').innerText = "ACCESS DENIED";
-            }
-        });
-    </script>
+    <script src="/assets/app.js"></script>
 </body>
 </html>
