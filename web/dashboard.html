@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HaziVault // Dashboard</title>
+    <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="logo-area">
+            <img src="/images/hazi.png" alt="HaziVault">
+            <span>HAZI_VAULT</span>
+        </div>
+        <br>
+        <div id="storage-container">
+            <small>Scanning Storage...</small>
+        </div>
+        
+        <div style="margin-top: auto;">
+            <button onclick="logout()">LOGOUT SYSTEM</button>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <h2>// FILE_COMMAND_CENTER</h2>
+            <div id="user-display">USER: ADMIN</div>
+        </div>
+
+        <div class="card">
+            <h3>>> UPLOAD_PROTOCOL</h3>
+            <form id="uploadForm" style="display: flex; gap: 10px; margin-top: 10px;">
+                <input type="file" id="fileInput" name="file" required>
+                <button type="submit">INITIATE UPLOAD</button>
+            </form>
+            <div id="uploadStatus" style="color: var(--accent); margin-top: 5px;"></div>
+        </div>
+
+        <div class="card">
+            <h3>>> DATA_INDEX</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>FILENAME</th>
+                        <th>SIZE</th>
+                        <th>TYPE</th>
+                        <th>ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody id="fileList">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="previewModal">
+        <span class="close-modal" onclick="closePreview()">&times;</span>
+        <div id="previewContainer"></div>
+    </div>
+
+    <script src="assets/app.js"></script>
+    <script>
+        // Init Dashboard
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStorage();
+            loadFiles();
+            checkAuth();
+        });
+    </script>
+</body>
+</html>
