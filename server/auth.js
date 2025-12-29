@@ -1,36 +1,52 @@
-// server/auth.js
+
 const express = require('express');
 const bcrypt = require('bcrypt');
-const fs = require('fs');
-const path = require('path');
+const db = require('./db');
 
 const router = express.Router();
-const DATA_PATH = path.join(__dirname, '..', 'data');
-const USERS_FILE = path.join(DATA_PATH, 'users.json');
 
-// ensure data folder exists
-if (!fs.existsSync(DATA_PATH)) fs.mkdirSync(DATA_PATH);
-
-router.post('/register', async (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password) return res.status(400).json({ error: 'Username & password required' });
-
-  const hashed = await bcrypt.hash(password, 10);
-  const user = { username, password: hashed };
-
-  fs.writeFileSync(USERS_FILE, JSON.stringify([user]));
-  res.json({ success: true });
+// cek apakah sudah ada user
+router.get('/exists', (req, res) => {
+  db.get('SELECT COUNT(*) as total FROM users', (err, row) => {
+    res.json({ exists: row.total > 0 });
+  });
 });
 
-router.post('/login', async (req, res) => {
+// register admin (sekali saja)
+router.post('/register', async (req, res) => {
   const { username, password } = req.body;
-  if (!fs.existsSync(USERS_FILE)) return res.status(401).json({ error: 'Not registered' });
+  if (!username || !password)
+    return res.status(400).json({ error: 'required' });
 
-  const users = JSON.parse(fs.readFileSync(USERS_FILE));
-  const match = await bcrypt.compare(password, users[0].password);
-  if (!match) return res.status(401).json({ error: 'Invalid credentials' });
+  const hash = await bcrypt.hash(password, 10);
 
-  res.json({ success: true });
+  db.run(
+    'INSERT INTO users (username, password) VALUES (?, ?)',
+    [username, hash],
+    err => {
+      if (err) return res.status(400).json({ error: 'exists' });
+      res.json({ success: true });
+    }
+  );
+});
+
+// login
+router.post('/login', (req, res) => {
+  const { username, password } = req.body;
+
+  db.get(
+    'SELECT * FROM users WHERE username = ?',
+    [username],
+    async (err, user) => {
+      if (!user) return res.status(401).json({ error: 'invalid' });
+
+      const ok = await bcrypt.compare(password, user.password);
+      if (!ok) return res.status(401).json({ error: 'invalid' });
+
+      req.session.user = { id: user.id, username: user.username };
+      res.json({ success: true });
+    }
+  );
 });
 
 module.exports = router;
