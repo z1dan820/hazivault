@@ -1,3 +1,7 @@
+![Foto Profil](images/hazivault.png)
+
+
+
 # 🔐 HaziVault
 
 HaziVault adalah software ringan untuk menyimpan dan meninjau media
