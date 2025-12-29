@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,17 +6,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HaziVault // Setup</title>
     <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="auth-container">
-        <div class="auth-box">
-            <h2>INITIAL SETUP</h2>
+    <div class="login-container">
+        <div class="login-box">
+            <div class="logo-area">
+                <img src="/images/hazi.png" alt="HaziVault">
+                <h1>HaziVault</h1>
+            </div>
+            <p class="login-subtitle">System Initialization</p>
             <form id="setupForm">
-                <input type="text" id="username" placeholder="NEW ADMIN USERNAME" required>
-                <input type="password" id="password" placeholder="NEW PASSWORD" required>
-                <button type="submit">INITIALIZE SYSTEM</button>
+                <div class="input-group">
+                    <i class="fas fa-user-plus"></i>
+                    <input type="text" id="username" placeholder="Create Admin Username" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-key"></i>
+                    <input type="password" id="password" placeholder="Create Secure Password" required>
+                </div>
+                <button type="submit" class="login-btn">Initialize System</button>
             </form>
-            <p id="msg" style="margin-top:10px; font-size: 0.8rem;"></p>
+            <p id="msg" class="error-message"></p>
+            <div class="login-footer">
+                <span>Already have an account?</span>
+                <a href="/login.html">Login</a>
+            </div>
         </div>
     </div>
     <script>
@@ -23,21 +39,27 @@
             e.preventDefault();
             const u = document.getElementById('username').value;
             const p = document.getElementById('password').value;
+            const msgEl = document.getElementById('msg');
 
-            const res = await fetch('/api/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: u, password: p })
-            });
+            try {
+                const res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: u, password: p })
+                });
 
-            if (res.ok) {
-                alert('User Created. Please Login.');
-                window.location.href = 'index.html';
-            } else {
-                document.getElementById('msg').innerText = "Error creating user.";
+                if (res.ok) {
+                    alert('System initialized successfully! Please login.');
+                    window.location.href = '/login.html';
+                } else {
+                    const errorData = await res.json();
+                    msgEl.innerText = errorData.message || 'Error creating user.';
+                }
+            } catch (error) {
+                console.error('Setup error:', error);
+                msgEl.innerText = 'An unexpected error occurred. Please try again.';
             }
         });
     </script>
 </body>
 </html>
-
