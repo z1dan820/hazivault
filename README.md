@@ -1,4 +1,4 @@
-![Foto Profil](images/hazivault.png)
+![Brand](images/hazi.png)
 
 
 
