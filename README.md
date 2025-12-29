@@ -5,6 +5,8 @@
 **HaziVault** adalah sistem Network Attached Storage (NAS) yang ringan, cepat, dan modern berbasis Node.js. Didesain khusus untuk perangkat berdaya rendah seperti STB Armbian, Termux (Android), dan VPS kecil.
 
 Menampilkan antarmuka pengguna (UI) bertema **Cyber** yang estetik dan fungsional.
+
+
 ☕Traktir Kopi : https://saweria.co/zidan120204
 
 ---
