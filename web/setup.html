@@ -1,25 +1,43 @@
-<h2>Setup HaziVault</h2>
-<form id="f">
-  <input name="username" placeholder="Admin username" required>
-  <input type="password" name="password" placeholder="Password" required>
-  <button>Setup</button>
-</form>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HaziVault // Setup</title>
+    <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-box">
+            <h2>INITIAL SETUP</h2>
+            <form id="setupForm">
+                <input type="text" id="username" placeholder="NEW ADMIN USERNAME" required>
+                <input type="password" id="password" placeholder="NEW PASSWORD" required>
+                <button type="submit">INITIALIZE SYSTEM</button>
+            </form>
+            <p id="msg" style="margin-top:10px; font-size: 0.8rem;"></p>
+        </div>
+    </div>
+    <script>
+        document.getElementById('setupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
 
-<script>
-fetch('/api/auth/exists')
-  .then(r => r.json())
-  .then(d => {
-    if (d.exists) location.href = '/login.html';
-  });
+            const res = await fetch('/api/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: u, password: p })
+            });
 
-document.getElementById('f').onsubmit = async e => {
-  e.preventDefault();
-  const data = Object.fromEntries(new FormData(e.target));
-  const r = await fetch('/api/auth/register', {
-    method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify(data)
-  });
-  if ((await r.json()).success) location.href = '/login.html';
-};
-</script>
+            if (res.ok) {
+                alert('User Created. Please Login.');
+                window.location.href = 'index.html';
+            } else {
+                document.getElementById('msg').innerText = "Error creating user.";
+            }
+        });
+    </script>
+</body>
+</html>
+
