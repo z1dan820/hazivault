@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>HaziVault</title>
+</head>
+<body>
+  <h1>🔐 HaziVault</h1>
+  <p>System status: <span id="status">checking...</span></p>
+
+  <script>
+    fetch('/api/ping')
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('status').innerText = data.status;
+      });
+  </script>
+</body>
+</html>
