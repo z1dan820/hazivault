@@ -1,20 +1,25 @@
 <h2>Setup HaziVault</h2>
-<form id="form">
-  <input name="username" placeholder="Username" required>
+<form id="f">
+  <input name="username" placeholder="Admin username" required>
   <input type="password" name="password" placeholder="Password" required>
   <button>Setup</button>
 </form>
 
 <script>
-document.getElementById('form').onsubmit = async e => {
+fetch('/api/auth/exists')
+  .then(r => r.json())
+  .then(d => {
+    if (d.exists) location.href = '/login.html';
+  });
+
+document.getElementById('f').onsubmit = async e => {
   e.preventDefault();
-  const fd = new FormData(e.target);
-  const data = Object.fromEntries(fd);
-  const res = await fetch('/api/auth/register', {
+  const data = Object.fromEntries(new FormData(e.target));
+  const r = await fetch('/api/auth/register', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
     body: JSON.stringify(data)
   });
-  alert((await res.json()).success ? 'Success' : 'Failed');
+  if ((await r.json()).success) location.href = '/login.html';
 };
 </script>
