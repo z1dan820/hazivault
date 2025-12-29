@@ -1,20 +1,61 @@
 
-<h2>Login HaziVault</h2>
-<form id="f">
-  <input name="username" required>
-  <input type="password" name="password" required>
-  <button>Login</button>
-</form>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HaziVault // Login</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <div class="logo-area">
+                <img src="/images/hazi.png" alt="HaziVault">
+                <h1>HaziVault</h1>
+            </div>
+            <p class="login-subtitle">Secure Cloud Storage</p>
+            <form id="loginForm">
+                <div class="input-group">
+                    <i class="fas fa-user"></i>
+                    <input type="text" name="username" placeholder="Username" required>
+                </div>
+                <div class="input-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" name="password" placeholder="Password" required>
+                </div>
+                <button type="submit" class="login-btn">Login</button>
+            </form>
+            <div class="login-footer">
+                <a href="#">Forgot Password?</a>
+                <span>&bull;</span>
+                <a href="/setup.html">Sign Up</a>
+            </div>
+        </div>
+    </div>
 
-<script>
-document.getElementById('f').onsubmit = async e => {
-  e.preventDefault();
-  const data = Object.fromEntries(new FormData(e.target));
-  const r = await fetch('/api/auth/login', {
-    method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify(data)
-  });
-  if ((await r.json()).success) location.href = '/';
-};
-</script>
+    <script>
+    document.getElementById('loginForm').onsubmit = async e => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(e.target));
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(data)
+        });
+        const result = await response.json();
+        if (result.success) {
+          location.href = '/';
+        } else {
+          alert('Login failed. Please check your credentials.');
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        alert('An error occurred during login. Please try again.');
+      }
+    };
+    </script>
+</body>
+</html>
