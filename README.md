@@ -13,6 +13,7 @@ Menampilkan antarmuka pengguna (UI) bertema **Cyber/NASA** yang estetik dan fung
 * **Dashboard Estetik:** Desain Dark Mode Holographic "NASA Style".
 * **Storage Detection:** Otomatis mendeteksi penggunaan disk (SD Card, HDD, SSD) via `df -h`.
 * **File Manager:**
+    * 🔏 Create Folder
     * ⚡ Upload File (Drag & Drop support via input).
     * 📥 Download File.
     * 👁️ Preview/Review langsung (Gambar, Video MP4, PDF).
