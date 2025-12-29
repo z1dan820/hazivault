@@ -1,8 +1,9 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>HaziVault // Dashboard</title>
     <link rel="stylesheet" href="assets/style.css">
 </head>
@@ -14,48 +15,66 @@
             <span>HAZI_VAULT</span>
         </div>
         <br>
-        <div id="storage-container">
-            <small>Scanning Storage...</small>
+        <div style="margin-bottom: 20px;">
+            <button onclick="logout()" class="btn-sm" style="width:100%">[LOGOUT SYSTEM]</button>
         </div>
         
-        <div style="margin-top: auto;">
-            <button onclick="logout()">LOGOUT SYSTEM</button>
+        <div id="storage-container">
+            <small>INITIALIZING SENSORS...</small>
         </div>
     </div>
 
     <div class="main-content">
         <div class="header">
             <h2>// FILE_COMMAND_CENTER</h2>
-            <div id="user-display">USER: ADMIN</div>
+            <div id="user-display">USER: ...</div>
+        </div>
+
+        <div class="card">
+             <h3>>> CREATE_FOLDER</h3>
+             <form id="createFolderForm" class="flex-form">
+                 <input type="text" id="folderNameInput" placeholder="NEW FOLDER NAME..." required autocomplete="off">
+                 <button type="submit">CREATE</button>
+             </form>
         </div>
 
         <div class="card">
             <h3>>> UPLOAD_PROTOCOL</h3>
-            <form id="uploadForm" style="display: flex; gap: 10px; margin-top: 10px;">
+            <form id="uploadForm" class="flex-form">
                 <input type="file" id="fileInput" name="file" required>
                 <button type="submit">INITIATE UPLOAD</button>
             </form>
-            <div id="uploadStatus" style="color: var(--accent); margin-top: 5px;"></div>
+            <div id="uploadProgress" style="display:none; margin-top:10px;">
+                 <div class="storage-bar"><div id="uploadBar" class="storage-fill" style="width:0%"></div></div>
+                 <small id="uploadStatus" style="color: var(--accent);">Uploading...</small>
+            </div>
         </div>
 
-        <div class="card">
-            <h3>>> DATA_INDEX</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>FILENAME</th>
-                        <th>SIZE</th>
-                        <th>TYPE</th>
-                        <th>ACTIONS</th>
-                    </tr>
-                </thead>
-                <tbody id="fileList">
+        <div class="card" style="padding-top:0">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin: 15px 0;">
+                <h3>>> DATA_INDEX</h3>
+                <button class="btn-sm" onclick="loadFiles()">[REFRESH DATA]</button>
+            </div>
+            
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>NAME</th>
+                            <th>SIZE</th>
+                            <th>TYPE</th>
+                            <th>ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="fileList">
+                        <tr><td colspan="4" style="text-align:center">SCANNING...</td></tr>
                     </tbody>
-            </table>
+                </table>
+            </div>
         </div>
     </div>
 
-    <div id="previewModal">
+    <div id="previewModal" onclick="if(event.target === this) closePreview()">
         <span class="close-modal" onclick="closePreview()">&times;</span>
         <div id="previewContainer"></div>
     </div>
@@ -64,9 +83,9 @@
     <script>
         // Init Dashboard
         document.addEventListener('DOMContentLoaded', () => {
+            checkAuth(); // Cek auth dulu
             loadStorage();
             loadFiles();
-            checkAuth();
         });
     </script>
 </body>
