@@ -1,0 +1,12 @@
+{
+  "name": "hazivault",
+  "version": "0.1.0",
+  "description": "Lightweight personal media vault",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
