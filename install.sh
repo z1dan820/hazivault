@@ -16,15 +16,22 @@ install_pkg() {
     PACKAGE=$1
     if ! command -v $PACKAGE &> /dev/null; then
         echo -e "${YELLOW}[!] $PACKAGE tidak ditemukan. Menginstall...${NC}"
-        if [ -x "$(command -v apt)" ]; then
-            sudo apt update && sudo apt install -y $PACKAGE
-        elif [ -x "$(command -v pkg)" ]; then
+        if [ -x "$(command -v pkg)" ]; then
+            # Jika di Termux, pakai pkg tanpa sudo
             pkg install -y $PACKAGE
+        elif [ -x "$(command -v apt)" ]; then
+            # Jika di Linux/STB, cek apakah ada sudo
+            if command -v sudo &> /dev/null; then
+                sudo apt update && sudo apt install -y $PACKAGE
+            else
+                apt update && apt install -y $PACKAGE
+            fi
         fi
     else
         echo -e "${GREEN}[OK] $PACKAGE sudah ada.${NC}"
     fi
 }
+
 
 # 1. Pastikan Git & Node.js terinstall
 echo -e "${BLUE}[1/5] Memeriksa Persyaratan Sistem...${NC}"
