@@ -1,3 +1,4 @@
+
 const API_URL = '/api';
 let currentPath = "";
 let selectedItem = null; // Untuk Context Menu
@@ -24,7 +25,7 @@ async function loadSystemStats() {
         
         // Handle Storage
         if(data.storage && data.storage.length > 0) {
-            const disk = data.storage[0]; // Ambil disk pertama dulu
+            const disk = data.storage[0]; // Ambil disk pertama
             document.getElementById('disk-val').innerText = `${disk.used} / ${disk.size}`;
             document.getElementById('disk-bar').style.width = disk.percent;
             document.getElementById('disk-name').innerText = disk.mount;
@@ -34,7 +35,9 @@ async function loadSystemStats() {
 
 async function loadFiles(path = "") {
     currentPath = path;
-    document.getElementById('path-display').innerText = path ? `/${path}` : '/Home';
+    const displayPath = path ? `/${path}` : '/Home';
+    document.getElementById('path-display').innerText = displayPath;
+    
     const container = document.getElementById('file-container');
     container.innerHTML = '<div style="text-align:center; padding:20px; color:#666">Loading...</div>';
 
@@ -70,7 +73,7 @@ async function loadFiles(path = "") {
                     <div class="file-name">${file.name}</div>
                     <div class="file-size">${file.size}</div>
                 </div>
-                <div onclick="openMenu(event, '${file.name}', ${file.isDir})" style="padding:10px"><i class="fa-solid fa-ellipsis-vertical"></i></div>
+                <div onclick="openMenu(event, '${file.name}', ${file.isDir})" style="padding:10px; cursor: pointer;"><i class="fa-solid fa-ellipsis-vertical"></i></div>
             `;
 
             // Click: Buka Folder / Preview File
@@ -85,7 +88,7 @@ async function loadFiles(path = "") {
                 }
             };
 
-            // Long Press untuk Mobile (Context Menu)
+            // Long Press untuk Mobile / Klik Kanan (Context Menu)
             div.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
                 openMenu(e, file.name, file.isDir);
@@ -100,6 +103,7 @@ async function loadFiles(path = "") {
 
 async function uploadFile() {
     const input = document.getElementById('hidden-upload');
+    input.value = ''; // Reset agar bisa pilih file yang sama
     input.click();
     
     input.onchange = async () => {
@@ -107,21 +111,33 @@ async function uploadFile() {
         if(!file) return;
 
         const formData = new FormData();
+        // [FIX] Masukkan Path DULUAN sebelum File agar terbaca oleh Multer
+        formData.append('path', currentPath); 
         formData.append('file', file);
-        formData.append('path', currentPath);
 
         const btn = document.querySelector('.fab-add');
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+        const originalIcon = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; // Loading
 
         try {
-            await fetch(`${API_URL}/upload`, { 
+            const res = await fetch(`${API_URL}/upload`, { 
                 method: 'POST', 
                 headers: { 'Authorization': userToken },
                 body: formData 
             });
-            loadFiles(currentPath);
-        } catch(e) { alert("Upload Failed"); }
-        finally { btn.innerHTML = '<i class="fa-solid fa-plus"></i>'; input.value=''; }
+            
+            if(res.ok) {
+                loadFiles(currentPath); // Refresh folder saat ini
+            } else {
+                alert("Upload Failed");
+            }
+        } catch(e) { 
+            alert("Network Error during upload"); 
+        }
+        finally { 
+            btn.innerHTML = originalIcon; // Balikin icon
+            input.value = ''; 
+        }
     };
 }
 
@@ -152,8 +168,9 @@ function openMenu(e, name, isDir) {
     let x = e.clientX; 
     let y = e.clientY;
     
-    // Fix overflow di layar HP
+    // Fix overflow di layar HP (supaya menu gak kepotong)
     if(x + 180 > window.innerWidth) x = window.innerWidth - 190;
+    if(y + 150 > window.innerHeight) y = window.innerHeight - 160;
     
     ctxMenu.style.top = `${y}px`;
     ctxMenu.style.left = `${x}px`;
@@ -168,9 +185,10 @@ async function menuAction(action) {
     if(!selectedItem) return;
     
     if(action === 'download') {
+        // Trigger download via link hidden
         const link = document.createElement('a');
         link.href = `/uploads/${selectedItem.fullPath}`;
-        link.download = selectedItem.name;
+        link.setAttribute('download', selectedItem.name); // Paksa atribut download
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -188,7 +206,7 @@ async function menuAction(action) {
     }
     
     if(action === 'delete') {
-        if(confirm(`Delete ${selectedItem.name}?`)) {
+        if(confirm(`Permanently delete ${selectedItem.name}?`)) {
             await fetch(`${API_URL}/delete`, {
                 method: 'POST', headers: getHeaders(),
                 body: JSON.stringify({ target: selectedItem.fullPath })
@@ -201,15 +219,17 @@ async function menuAction(action) {
 
 // --- NAVIGASI ---
 function goUp() {
-    if(!currentPath) return;
+    if(!currentPath) return; // Sudah di root
     const parts = currentPath.split('/');
-    parts.pop();
+    parts.pop(); // Buang folder terakhir
     loadFiles(parts.join('/'));
 }
 
 function logout() {
-    localStorage.removeItem('haziToken');
-    window.location.href = 'index.html';
+    if(confirm("Logout from system?")) {
+        localStorage.removeItem('haziToken');
+        window.location.href = 'index.html';
+    }
 }
 
 function previewFile(name) {
@@ -218,10 +238,11 @@ function previewFile(name) {
 }
 
 // --- AUTO RUN ---
-if(window.location.pathname.includes('dashboard')) {
+// Cek jika kita berada di dashboard
+if(window.location.pathname.endsWith('dashboard.html') || window.location.pathname.endsWith('dashboard')) {
     checkAuth();
     loadSystemStats();
-    loadFiles();
+    loadFiles(); // Load root saat pertama buka
     setInterval(loadSystemStats, 10000); // Auto refresh stats
-            }
-
+                }
+                      
