@@ -8,7 +8,7 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 echo -e "${BLUE}=========================================${NC}"
-echo -e "${BLUE}    INSTALLER HAZIVAULT NAS v3.0.3       ${NC}"
+echo -e "${BLUE}    INSTALLER HAZIVAULT NAS v3.0.4       ${NC}"
 echo -e "${BLUE}=========================================${NC}"
 
 # --- LOGIKA PINTAR: CEK SUDO & TERMUX ---
@@ -44,11 +44,12 @@ install_pkg git
 install_pkg nodejs
 install_pkg python
 install_pkg make
+install_pkg binutils # Penting untuk linking kompilasi
 
-# FIX UNTUK TERMUX (Masalah No module named 'distutils')
+# FIX KHUSUS TERMUX (DISTUTILS ERROR)
 if [ "$IS_TERMUX" = true ]; then
-    echo -e "${YELLOW}[+] Menginstall fix untuk Python (setuptools)...${NC}"
-    pkg install -y python-setuptools
+    echo -e "${YELLOW}[+] Memasang Fix Python Setuptools via PIP...${NC}"
+    pip install setuptools
 fi
 
 # 2. Download Source Code
@@ -62,8 +63,14 @@ fi
 # 3. Install NPM Modules
 echo -e "${BLUE}[3/5] Menginstall Dependency...${NC}"
 cd "$TARGET_DIR"
-# Pakai --unsafe-perm agar sqlite3 bisa build di folder home
-npm install --production --unsafe-perm
+
+# Step ini untuk memastikan sqlite3 dapet library yang bener di Termux
+if [ "$IS_TERMUX" = true ]; then
+    export LDFLAGS="-L${PREFIX}/lib"
+    export CPPFLAGS="-I${PREFIX}/include"
+fi
+
+npm install --production
 
 # 4. PM2 Setup
 echo -e "${BLUE}[4/5] Mengatur PM2...${NC}"
@@ -93,7 +100,6 @@ echo -e "Cek Status: pm2 status"
 echo -e ""
 echo -e "Buka di Browser:"
 
-# Deteksi IP yang lebih akurat untuk Termux/Android
 MY_IP=$(ifconfig 2>/dev/null | grep "inet " | grep -v "127.0.0.1" | awk '{print $2}' | head -n 1)
 if [ -z "$MY_IP" ]; then
     MY_IP=$(ip addr show | grep "inet " | grep -v "127.0.0.1" | awk '{print $2}' | cut -d/ -f1 | head -n 1)
