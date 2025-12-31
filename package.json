@@ -1,7 +1,7 @@
 {
   "name": "hazivault",
-  "version": "2.0.0",
-  "description": "Secure NAS System",
+  "version": "2.5.0",
+  "description": "Secure NAS System with Multi-Storage Support",
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js"
