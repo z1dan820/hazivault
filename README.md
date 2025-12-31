@@ -1,4 +1,23 @@
-# ![HaziVault Logo](images/hazi.png) HAZIVAULT NAS v3.0
+# ![HaziVault Logo](images/hazi.png) 
+
+<p align="center">
+  <img src="https://img.shields.io/badge/MADE%20WITH-NODE.JS-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Made with Node.js">
+  <img src="https://img.shields.io/badge/JAVASCRIPT-ES6+-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript">
+  <img src="https://img.shields.io/badge/DOCKER-READY-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker">
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/RELEASE-v3.0.1-orange?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/LICENSE-MIT-green?style=for-the-badge" alt="License">
+  <img src="https://img.shields.io/badge/MAINTAINED-YES-blue?style=for-the-badge" alt="Maintained">
+</p>
+
+<a href="https://github.com/z1dan820">
+  <img src="https://img.shields.io/badge/GITHUB-z1dan820-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub z1dan820">
+</a>
+
+
+HAZIVAULT NAS v3.0
 
 **HaziVault** adalah sistem Network Attached Storage (NAS) DIY yang ringan, aman, dan modern, dibangun di atas Node.js. Didesain khusus untuk berjalan optimal di perangkat berdaya rendah seperti STB Armbian, Single Board Computer (SBC), atau bahkan Termux di Android.
 
