@@ -5,10 +5,9 @@
   <img src="https://img.shields.io/badge/JAVASCRIPT-ES6+-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript">
   <img src="https://img.shields.io/badge/DOCKER-READY-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker">
 </p>
-<a href="https://github.com/z1dan820">
+<p align="center" href="https://github.com/z1dan820">
   <img src="https://img.shields.io/badge/GITHUB-z1dan820-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub z1dan820">
-</a>
-
+</p>
 <p align="center">
   <img src="https://img.shields.io/badge/RELEASE-v3.0.1-orange?style=for-the-badge" alt="Version">
   <img src="https://img.shields.io/badge/LICENSE-MIT-green?style=for-the-badge" alt="License">
