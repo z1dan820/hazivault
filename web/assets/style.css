@@ -2,7 +2,7 @@
     --bg-deep: #0a0c10;
     --bg-card: #161b22;
     --bg-hover: #1f252e;
-    --primary: #00d285;
+    --primary: #00d285; /* Emerald Green */
     --primary-dim: rgba(0, 210, 133, 0.15);
     --text-main: #f0f6fc;
     --text-muted: #8b949e;
@@ -11,7 +11,9 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Inter, sans-serif; -webkit-tap-highlight-color: transparent; }
+
 body { background-color: var(--bg-deep); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
 .hidden { display: none !important; }
 .btn { border: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.9rem; }
 .btn-primary { background: var(--primary); color: #000; }
@@ -31,23 +33,44 @@ body { background-color: var(--bg-deep); color: var(--text-main); height: 100vh;
 .brand { display: flex; align-items: center; gap: 10px; font-weight: bold; font-size: 1.2rem; color: var(--primary); }
 .brand img { height: 30px; }
 .main-scroll { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 100px; }
+
 .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
 .metric-card { background: var(--bg-card); padding: 15px; border-radius: 12px; border: 1px solid var(--border); }
 .metric-card label { color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; }
 .metric-card .val { font-size: 1.2rem; font-weight: bold; margin: 5px 0; }
 .progress-bg { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
 .progress-fill { height: 100%; background: var(--primary); width: 0%; transition: width 0.3s; }
+
 .section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
 .path-crumb { font-size: 0.85rem; color: var(--text-muted); background: var(--bg-card); padding: 5px 10px; border-radius: 6px; display: inline-block; }
 
-/* FILE LIST */
+/* FILE LIST & THUMBNAILS */
 .file-list { display: flex; flex-direction: column; gap: 8px; }
-.file-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 10px; display: flex; align-items: center; gap: 15px; transition: 0.2s; user-select: none; }
+
+.file-item { 
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; 
+    padding: 10px; display: flex; align-items: center; gap: 15px; 
+    transition: 0.2s; user-select: none; 
+}
 .file-item:active { background: var(--bg-hover); transform: scale(0.98); }
-.file-thumb { width: 45px; height: 45px; border-radius: 8px; background: var(--bg-deep); display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
-.file-thumb img { width: 100%; height: 100%; object-fit: cover; }
-.file-thumb i { font-size: 1.5rem; color: var(--primary); }
-.is-dir .file-thumb i { color: #f1c40f; } .is-pdf .file-thumb i { color: #e74c3c; } 
+
+.file-thumb { 
+    width: 45px; height: 45px; border-radius: 8px; background: var(--bg-deep); 
+    display: flex; align-items: center; justify-content: center; 
+    overflow: hidden; flex-shrink: 0; position: relative;
+}
+
+/* CSS Agar Video/Gambar Fit Sempurna */
+.file-thumb img, 
+.file-thumb video { 
+    width: 100%; height: 100%; object-fit: cover; 
+}
+
+.file-thumb i { font-size: 1.5rem; color: var(--text-muted); }
+
+/* Warna Icon Folder */
+.is-dir .file-thumb i { color: #f1c40f; font-size: 1.8rem; } 
+
 .file-meta { flex: 1; overflow: hidden; }
 .file-name { font-size: 0.9rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .file-size { font-size: 0.75rem; color: var(--text-muted); }
