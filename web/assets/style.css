@@ -2,7 +2,7 @@
     --bg-deep: #0a0c10;
     --bg-card: #161b22;
     --bg-hover: #1f252e;
-    --primary: #00d285; /* HaziVault Emerald */
+    --primary: #00d285; /* Emerald Green */
     --primary-dim: rgba(0, 210, 133, 0.15);
     --text-main: #f0f6fc;
     --text-muted: #8b949e;
@@ -14,22 +14,19 @@
 
 body { background-color: var(--bg-deep); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-/* UTILITIES */
 .hidden { display: none !important; }
-.btn { border: none; padding: 10px 15px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+.btn { border: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.9rem; }
 .btn-primary { background: var(--primary); color: #000; }
 .btn-primary:active { transform: scale(0.98); }
 .btn-danger { background: var(--danger); color: white; }
 
-/* AUTH PAGES (Login/Setup) */
+/* AUTH */
 .auth-wrapper { display: flex; align-items: center; justify-content: center; height: 100%; padding: 20px; background: radial-gradient(circle at 50% -20%, var(--primary-dim), transparent 70%); }
 .auth-card { background: var(--bg-card); border: 1px solid var(--border); width: 100%; max-width: 400px; padding: 40px; border-radius: 16px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
 .logo-lg { height: 60px; margin-bottom: 20px; }
 .input-box { background: var(--bg-deep); border: 1px solid var(--border); padding: 12px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
 .input-box input { background: transparent; border: none; color: white; width: 100%; outline: none; }
 .input-box i { color: var(--text-muted); }
-.auth-card h2 { margin-bottom: 5px; color: var(--primary); }
-.auth-card p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 30px; }
 
 /* DASHBOARD */
 .app-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); background: var(--bg-card); }
@@ -38,69 +35,36 @@ body { background-color: var(--bg-deep); color: var(--text-main); height: 100vh;
 
 .main-scroll { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 100px; }
 
-/* Metrics Cards */
 .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
 .metric-card { background: var(--bg-card); padding: 15px; border-radius: 12px; border: 1px solid var(--border); }
 .metric-card label { color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; }
 .metric-card .val { font-size: 1.2rem; font-weight: bold; margin: 5px 0; }
 .progress-bg { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
-.progress-fill { height: 100%; background: var(--primary); width: 0%; transition: width 0.5s; }
+.progress-fill { height: 100%; background: var(--primary); width: 0%; transition: width 0.3s; }
 
-/* File List */
 .section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-.path-crumb { font-size: 0.85rem; color: var(--text-muted); background: var(--bg-card); padding: 5px 10px; border-radius: 6px; display: inline-block; margin-bottom: 10px; }
+.path-crumb { font-size: 0.85rem; color: var(--text-muted); background: var(--bg-card); padding: 5px 10px; border-radius: 6px; display: inline-block; }
 
-.file-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
-/* List View Style (Default for Mobile) */
+/* FILE LIST */
 .file-list { display: flex; flex-direction: column; gap: 8px; }
-
-.file-item { 
-    background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; 
-    padding: 12px; display: flex; align-items: center; gap: 15px; position: relative;
-    transition: 0.2s; user-select: none;
-}
+.file-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 10px; display: flex; align-items: center; gap: 15px; transition: 0.2s; user-select: none; }
 .file-item:active { background: var(--bg-hover); transform: scale(0.98); }
-
-.file-thumb { 
-    width: 45px; height: 45px; border-radius: 8px; background: var(--bg-deep); 
-    display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;
-}
+.file-thumb { width: 45px; height: 45px; border-radius: 8px; background: var(--bg-deep); display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
 .file-thumb img { width: 100%; height: 100%; object-fit: cover; }
 .file-thumb i { font-size: 1.5rem; color: var(--primary); }
-.is-dir .file-thumb i { color: #f1c40f; } /* Folder Yellow */
-.is-pdf .file-thumb i { color: #e74c3c; } /* PDF Red */
-
+.is-dir .file-thumb i { color: #f1c40f; } 
+.is-pdf .file-thumb i { color: #e74c3c; } 
 .file-meta { flex: 1; overflow: hidden; }
 .file-name { font-size: 0.9rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .file-size { font-size: 0.75rem; color: var(--text-muted); }
 
-/* Context Menu */
-.context-menu {
-    position: fixed; background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: 8px; padding: 5px; z-index: 1000; width: 180px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-}
-.ctx-item {
-    padding: 10px 15px; color: var(--text-main); cursor: pointer; display: flex; gap: 10px; align-items: center; font-size: 0.9rem; border-radius: 5px;
-}
+/* MENUS & MODALS */
+.context-menu { position: fixed; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 5px; z-index: 1000; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
+.ctx-item { padding: 12px 15px; color: var(--text-main); cursor: pointer; display: flex; gap: 10px; align-items: center; font-size: 0.9rem; border-radius: 8px; }
 .ctx-item:hover { background: var(--bg-hover); color: var(--primary); }
 .ctx-delete { color: var(--danger); }
 
-/* Bottom Nav */
-.bottom-nav { 
-    position: fixed; bottom: 0; width: 100%; background: var(--bg-card); 
-    border-top: 1px solid var(--border); display: flex; justify-content: space-around; 
-    padding: 10px 0; z-index: 900;
-}
+/* BOTTOM NAV & FAB */
+.bottom-nav { position: fixed; bottom: 0; width: 100%; background: var(--bg-card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; padding: 10px 0; z-index: 900; }
 .nav-btn { background: none; border: none; color: var(--text-muted); display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 0.7rem; cursor: pointer; }
-.nav-btn i { font-size: 1.2rem; }
-.nav-btn.active { color: var(--primary); }
-
-/* Floating Action Button (FAB) */
-.fab-add {
-    position: fixed; bottom: 80px; right: 20px; width: 55px; height: 55px;
-    background: var(--primary); border-radius: 50%; display: flex;
-    align-items: center; justify-content: center; box-shadow: 0 5px 20px rgba(0, 210, 133, 0.4);
-    font-size: 1.5rem; color: #000; cursor: pointer; z-index: 800;
-}
-
+.fab-add { position: fixed; bottom: 80px; right: 20px; width: 55px; height: 55px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 20px rgba(0, 210, 133, 0.4); font-size: 1.5rem; color: #000; cursor: pointer; z-index: 800; }
