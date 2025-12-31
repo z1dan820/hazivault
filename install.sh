@@ -31,7 +31,7 @@ install_pkg() {
 echo -e "${BLUE}[1/5] Memeriksa Persyaratan Sistem...${NC}"
 install_pkg git
 install_pkg nodejs
-install_pkg python # Kadang dibutuhkan untuk build
+install_pkg python3 # Kadang dibutuhkan untuk build
 install_pkg make
 
 # 2. Download/Update Source Code
