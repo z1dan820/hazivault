@@ -1,7 +1,6 @@
-
 #!/bin/bash
 
-# Warna biar keren
+# ================= WARNA =================
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
@@ -9,112 +8,111 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 echo -e "${BLUE}=========================================${NC}"
-echo -e "${BLUE}    INSTALLER HAZIVAULT NAS              ${NC}"
+echo -e "${BLUE}    INSTALLER HAZIVAULT NAS               ${NC}"
 echo -e "${BLUE}=========================================${NC}"
 
-# FUNGSI DETEKSI & INSTALL PAKET
+# ================= DETEKSI TERMUX =================
+IS_TERMUX=false
+if [ -d "$HOME/.termux" ] || command -v termux-setup-storage >/dev/null 2>&1; then
+    IS_TERMUX=true
+fi
+
+# ================= FUNGSI INSTALL =================
 install_pkg() {
-    PACKAGE=$1
-    if ! command -v $PACKAGE &> /dev/null; then
-        echo -e "${YELLOW}[!] $PACKAGE tidak ditemukan. Menginstall...${NC}"
-        if [ -x "$(command -v apt)" ]; then
-            sudo apt update && sudo apt install -y $PACKAGE
-        elif [ -x "$(command -v pkg)" ]; then
-            pkg install -y $PACKAGE
+    PKG=$1
+    if ! command -v $PKG >/dev/null 2>&1; then
+        echo -e "${YELLOW}[!] Menginstall $PKG...${NC}"
+        if command -v apt >/dev/null 2>&1; then
+            sudo apt update
+            sudo apt install -y $PKG
+        elif command -v pkg >/dev/null 2>&1; then
+            pkg install -y $PKG
         fi
     else
-        echo -e "${GREEN}[OK] $PACKAGE sudah ada.${NC}"
+        echo -e "${GREEN}[OK] $PKG tersedia${NC}"
     fi
 }
 
-# 1. Pastikan Git & Node.js terinstall
-echo -e "${BLUE}[1/5] Memeriksa Persyaratan Sistem...${NC}"
+# ================= STEP 1 =================
+echo -e "${BLUE}[1/5] Cek kebutuhan sistem...${NC}"
 install_pkg git
-install_pkg nodejs
-#install_pkg python3 # Kadang dibutuhkan untuk build
+install_pkg curl
 install_pkg make
 
-# 2. Download/Update Source Code
-echo -e "${BLUE}[2/5] Mengunduh HaziVault...${NC}"
-TARGET_DIR="/opt/hazivault"
-IS_TERMUX=false
-
-# Cek jika ini Termux
-if [ -d "$HOME/.termux" ] || [ -x "$(command -v termux-setup-storage)" ]; then
-    IS_TERMUX=true
-    TARGET_DIR="$HOME/hazivault"
+# ================= NODE.JS =================
+if ! command -v node >/dev/null 2>&1; then
+    echo -e "${YELLOW}[!] Node.js belum ada, menginstall LTS...${NC}"
+    if [ "$IS_TERMUX" = false ]; then
+        curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+        sudo apt install -y nodejs
+    else
+        pkg install -y nodejs
+    fi
 fi
 
-if [ -d "$TARGET_DIR" ]; then
-    echo "Folder sudah ada, melakukan update..."
-    cd $TARGET_DIR
-    git pull
-else
-    git clone https://github.com/z1dan820/hazivault.git cd hazivault/ #$TARGET_DIR
-fi
+echo -e "${GREEN}[OK] Node.js $(node -v)${NC}"
+echo -e "${GREEN}[OK] npm $(npm -v)${NC}"
 
-# 3. Install Dependency Project
-echo -e "${BLUE}[3/5] Menginstall Library Project...${NC}"
-#cd $TARGET_DIR
-npm install --production
-
-# 4. Install PM2 (Process Manager) Global
-echo -e "${BLUE}[4/5] Menginstall & Setting PM2...${NC}"
-if ! command -v pm2 &> /dev/null; then
-    npm install -g pm2
-fi
-
-# Stop proses lama jika ada
-pm2 delete hazivault 2>/dev/null
-
-# Jalankan Aplikasi dengan PM2
-pm2 start server/index.js --name hazivault
-
-# Save list proses saat ini
-pm2 save
-
-# 5. Setup Auto-Start (Reboot)
-echo -e "${BLUE}[5/5] Mengatur Auto-Start saat Reboot...${NC}"
+# ================= STEP 2 =================
+echo -e "${BLUE}[2/5] Clone / Update HaziVault...${NC}"
 
 if [ "$IS_TERMUX" = true ]; then
-    # --- LOGIKA KHUSUS TERMUX ---
-    # Di Termux, kita masukkan perintah 'pm2 resurrect' ke .bashrc
-    # Jadi saat user buka aplikasi Termux, server otomatis nyala.
-    
+    TARGET_DIR="$HOME/hazivault"
+else
+    TARGET_DIR="/opt/hazivault"
+fi
+
+if [ -d "$TARGET_DIR/.git" ]; then
+    cd $TARGET_DIR || exit 1
+    git pull
+else
+    if [ "$IS_TERMUX" = false ]; then
+        sudo mkdir -p $TARGET_DIR
+        sudo chown $USER:$USER $TARGET_DIR
+    fi
+    git clone https://github.com/z1dan820/hazivault.git $TARGET_DIR
+    cd $TARGET_DIR || exit 1
+fi
+
+# ================= STEP 3 =================
+echo -e "${BLUE}[3/5] Install dependency...${NC}"
+npm install --production
+
+# ================= STEP 4 =================
+echo -e "${BLUE}[4/5] Install & setup PM2...${NC}"
+
+if ! command -v pm2 >/dev/null 2>&1; then
+    if [ "$IS_TERMUX" = false ]; then
+        sudo npm install -g pm2
+    else
+        npm install -g pm2
+    fi
+fi
+
+pm2 delete hazivault >/dev/null 2>&1
+pm2 start server/index.js --name hazivault
+pm2 save
+
+# ================= STEP 5 =================
+echo -e "${BLUE}[5/5] Setup auto-start...${NC}"
+
+if [ "$IS_TERMUX" = true ]; then
     if ! grep -q "pm2 resurrect" ~/.bashrc; then
         echo "pm2 resurrect >/dev/null 2>&1" >> ~/.bashrc
     fi
-    echo -e "${GREEN}[OK] Auto-start Termux diatur (via .bashrc).${NC}"
-    echo -e "${YELLOW}Catatan Termux: Server akan jalan saat Anda membuka aplikasi Termux.${NC}"
-
+    echo -e "${GREEN}[OK] Auto-start Termux aktif${NC}"
 else
-    # --- LOGIKA LINUX / STB (Systemd) ---
-    # PM2 punya fitur startup generator untuk Linux
-    
-    # Deteksi user saat ini
-    CURRENT_USER=$(whoami)
-    
-    # Generate startup script & Execute
-    if [ "$EUID" -ne 0 ]; then
-         # Jika bukan root (misal user biasa pakai sudo), perlu trik
-         sudo env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u $CURRENT_USER --hp $HOME
-    else
-         pm2 startup systemd
-    fi
-    
+    pm2 startup systemd -u $USER --hp $HOME | sudo bash
     pm2 save
-    echo -e "${GREEN}[OK] Auto-start Systemd berhasil diatur.${NC}"
+    echo -e "${GREEN}[OK] Auto-start systemd aktif${NC}"
 fi
 
+# ================= SELESAI =================
 echo -e "${BLUE}=========================================${NC}"
-echo -e "${GREEN}✅ INSTALASI SUKSES & BERJALAN di BACKGROUND!${NC}"
-echo -e "Cek status server: pm2 status"
-echo -e "Lihat log server : pm2 log hazivault"
+echo -e "${GREEN}✅ HAZIVAULT BERHASIL TERPASANG${NC}"
+echo -e "Status : pm2 status"
+echo -e "Log    : pm2 logs hazivault"
 echo -e ""
-echo -e "Akses di Browser:"
-if [ -x "$(command -v hostname)" ]; then
-    echo -e "👉 http://$(hostname -I | awk '{print $1}'):3000"
-else
-    echo -e "👉 http://localhost:3000"
-fi
+IP=$(hostname -I 2>/dev/null | awk '{print $1}')
+echo -e "Akses  : http://${IP:-localhost}:3000"
 echo -e "${BLUE}=========================================${NC}"
