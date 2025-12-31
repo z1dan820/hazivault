@@ -23,6 +23,11 @@ HAZIVAULT NAS v3.0
 
 Versi 3.0 hadir dengan antarmuka pengguna (UI) bertema **Emerald Dark Premium** yang segar, peningkatan keamanan, dan fitur manajemen file tingkat lanjut.
 
+<a href="https://saweria.co/zidan120204">
+  <img src="https://img.shields.io/badge/SAWERIA-TRAKTIR%20KOPI%20☕-faae2b?style=for-the-badge&logo=ko-fi&logoColor=white" alt="Traktir Kopi">
+</a>
+
+
 ---
 # ![Dokumentasi](images/ss1.jpg)
 # ![Dokumentasi](images/ss2.jpg)
