@@ -3,21 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HaziVault // Setup</title>
+    <title>Setup - HaziVault</title>
     <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="auth-container">
-        <div class="auth-box">
-            <h2>INITIAL SETUP</h2>
+    <div class="auth-wrapper">
+        <div class="auth-card">
+            <h2 style="color:var(--text-main)">Initial Setup</h2>
+            <p>Create Master Admin</p>
+
             <form id="setupForm">
-                <input type="text" id="username" placeholder="NEW ADMIN USERNAME" required>
-                <input type="password" id="password" placeholder="NEW PASSWORD" required>
-                <button type="submit">INITIALIZE SYSTEM</button>
+                <div class="input-box">
+                    <i class="fa-solid fa-user-shield"></i>
+                    <input type="text" id="username" placeholder="New Username" required>
+                </div>
+                <div class="input-box">
+                    <i class="fa-solid fa-key"></i>
+                    <input type="password" id="password" placeholder="New Password" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">
+                    INITIALIZE SYSTEM
+                </button>
             </form>
-            <p id="msg" style="margin-top:10px; font-size: 0.8rem;"></p>
         </div>
     </div>
+
     <script>
         document.getElementById('setupForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -26,15 +37,15 @@
 
             const res = await fetch('/api/register', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ username: u, password: p })
             });
 
-            if (res.ok) {
-                alert('User Created. Please Login.');
+            if(res.ok) {
+                alert("Setup Complete. Please Login.");
                 window.location.href = 'index.html';
             } else {
-                document.getElementById('msg').innerText = "Error creating user.";
+                alert("Setup Failed / Already Initialized");
             }
         });
     </script>
