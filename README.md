@@ -61,3 +61,13 @@ npm install
 ```bash
 npm start
 ```
+## 🐳 Instalasi via Docker (Paling Mudah)
+
+Jika Anda menggunakan Docker, instalasi HaziVault bisa dilakukan dengan satu baris perintah:
+
+```bash
+docker run -d \
+  --name hazivault \
+  -p 3000:3000 \
+  -v $(pwd)/data:/app/data \
+  ghcr.io/z1dan820/hazivault:latest
