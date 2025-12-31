@@ -48,3 +48,4 @@ Ikuti langkah-langkah ini untuk menginstal HaziVault di perangkat Anda:
 ```bash
 git clone [https://github.com/z1dan820/hazivault.git](https://github.com/z1dan820/hazivault.git)
 cd hazivault
+```
