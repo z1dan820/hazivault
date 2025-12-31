@@ -26,7 +26,6 @@
                 <div style="font-size:0.75rem; color:#888" id="ram-val">RAM: --</div>
             </div>
         </div>
-
         <div class="section-head">
             <h3>Files</h3>
             <div id="path-display" class="path-crumb">/Home</div>
@@ -35,7 +34,17 @@
     </div>
 
     <div class="fab-add" onclick="uploadFile()"><i class="fa-solid fa-plus"></i></div>
-    <input type="file" id="hidden-upload" class="hidden">
+    <input type="file" id="hidden-upload" class="hidden" multiple>
+
+    <div id="bulk-bar" class="bulk-bar">
+        <div class="bulk-info"><span id="selected-count">0</span> Selected</div>
+        <div class="bulk-actions">
+            <button class="bulk-btn" onclick="selectAll()"><i class="fa-solid fa-check-double"></i></button>
+            <button class="bulk-btn" onclick="bulkDownload()"><i class="fa-solid fa-download"></i></button>
+            <button class="bulk-btn del" onclick="bulkDelete()"><i class="fa-solid fa-trash"></i></button>
+            <button class="bulk-btn" onclick="exitSelectionMode()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+    </div>
 
     <nav class="bottom-nav">
         <button class="nav-btn active" onclick="loadFiles('')"><i class="fa-solid fa-house"></i>Home</button>
@@ -54,7 +63,7 @@
         <h4 style="margin-bottom:15px; color:var(--text-main)">Uploading...</h4>
         <div class="progress-bg" style="height:10px; background:#333;"><div id="upload-bar" class="progress-fill" style="width:0%"></div></div>
         <div id="upload-percent" style="margin-top:10px; font-weight:bold; color:var(--primary)">0%</div>
-        <small id="upload-filename" style="color:#888; display:block; margin-top:5px;">filename</small>
+        <small id="upload-filename" style="color:#888; display:block; margin-top:5px;"></small>
     </div>
 
     <div id="storage-modal" class="context-menu hidden" style="position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width:90%; max-width:400px; padding:20px; z-index:2000;">
