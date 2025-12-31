@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # ================= WARNA =================
 GREEN='\033[0;32m'
@@ -8,7 +9,7 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 echo -e "${BLUE}=========================================${NC}"
-echo -e "${BLUE}    INSTALLER HAZIVAULT NAS               ${NC}"
+echo -e "${BLUE}    INSTALLER HAZIVAULT NAS (FINAL)       ${NC}"
 echo -e "${BLUE}=========================================${NC}"
 
 # ================= DETEKSI TERMUX =================
@@ -16,6 +17,9 @@ IS_TERMUX=false
 if [ -d "$HOME/.termux" ] || command -v termux-setup-storage >/dev/null 2>&1; then
     IS_TERMUX=true
 fi
+
+# Pastikan PATH aman (root / user)
+export PATH=$PATH:/usr/local/bin:/usr/bin:/bin
 
 # ================= FUNGSI INSTALL =================
 install_pkg() {
@@ -50,6 +54,16 @@ if ! command -v node >/dev/null 2>&1; then
     fi
 fi
 
+# Pastikan npm ada
+if ! command -v npm >/dev/null 2>&1; then
+    echo -e "${YELLOW}[!] npm tidak ditemukan, menginstall...${NC}"
+    if command -v apt >/dev/null 2>&1; then
+        sudo apt install -y npm
+    else
+        pkg install -y npm
+    fi
+fi
+
 echo -e "${GREEN}[OK] Node.js $(node -v)${NC}"
 echo -e "${GREEN}[OK] npm $(npm -v)${NC}"
 
@@ -63,20 +77,20 @@ else
 fi
 
 if [ -d "$TARGET_DIR/.git" ]; then
-    cd $TARGET_DIR || exit 1
+    cd "$TARGET_DIR"
     git pull
 else
     if [ "$IS_TERMUX" = false ]; then
-        sudo mkdir -p $TARGET_DIR
-        sudo chown $USER:$USER $TARGET_DIR
+        sudo mkdir -p "$TARGET_DIR"
+        sudo chown $USER:$USER "$TARGET_DIR"
     fi
-    git clone https://github.com/z1dan820/hazivault.git $TARGET_DIR
-    cd $TARGET_DIR || exit 1
+    git clone https://github.com/z1dan820/hazivault.git "$TARGET_DIR"
+    cd "$TARGET_DIR"
 fi
 
 # ================= STEP 3 =================
 echo -e "${BLUE}[3/5] Install dependency...${NC}"
-npm install --production
+npm install --omit=dev
 
 # ================= STEP 4 =================
 echo -e "${BLUE}[4/5] Install & setup PM2...${NC}"
@@ -89,7 +103,7 @@ if ! command -v pm2 >/dev/null 2>&1; then
     fi
 fi
 
-pm2 delete hazivault >/dev/null 2>&1
+pm2 delete hazivault >/dev/null 2>&1 || true
 pm2 start server/index.js --name hazivault
 pm2 save
 
@@ -100,19 +114,24 @@ if [ "$IS_TERMUX" = true ]; then
     if ! grep -q "pm2 resurrect" ~/.bashrc; then
         echo "pm2 resurrect >/dev/null 2>&1" >> ~/.bashrc
     fi
-    echo -e "${GREEN}[OK] Auto-start Termux aktif${NC}"
+    echo -e "${GREEN}[OK] Auto-start Termux aktif (.bashrc)${NC}"
 else
-    pm2 startup systemd -u $USER --hp $HOME | sudo bash
-    pm2 save
-    echo -e "${GREEN}[OK] Auto-start systemd aktif${NC}"
+    if command -v systemctl >/dev/null 2>&1; then
+        pm2 startup systemd -u $USER --hp $HOME
+        pm2 save
+        echo -e "${GREEN}[OK] Auto-start systemd aktif${NC}"
+    else
+        echo -e "${YELLOW}[!] systemd tidak tersedia, skip auto-start${NC}"
+    fi
 fi
 
 # ================= SELESAI =================
 echo -e "${BLUE}=========================================${NC}"
-echo -e "${GREEN}✅ HAZIVAULT BERHASIL TERPASANG${NC}"
+echo -e "${GREEN}✅ HAZIVAULT BERHASIL TERPASANG & BERJALAN${NC}"
 echo -e "Status : pm2 status"
 echo -e "Log    : pm2 logs hazivault"
 echo -e ""
+
 IP=$(hostname -I 2>/dev/null | awk '{print $1}')
 echo -e "Akses  : http://${IP:-localhost}:3000"
 echo -e "${BLUE}=========================================${NC}"
