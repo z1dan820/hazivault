@@ -95,3 +95,16 @@ docker run -d \
   -p 3000:3000 \
   -v $(pwd)/data:/app/data \
   ghcr.io/z1dan820/hazivault:latest
+```
+**INSTALASI SUPER CEPAT & SUPER OTOMATIS**
+
+# Untuk STB/Linux (Wajib pakai sudo di depan bash)
+
+```bash
+curl -sL https://raw.githubusercontent.com/z1dan820/hazivault/main/install.sh | sudo bash
+```
+
+# Untuk Termux (Tanpa sudo)
+```bash
+curl -sL https://raw.githubusercontent.com/z1dan820/hazivault/main/install.sh | bash
+```
