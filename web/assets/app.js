@@ -1,19 +1,14 @@
-
 const API_URL = '/api';
 let currentPath = "";
-let selectedItem = null; // Untuk Context Menu
+let selectedItem = null;
 let userToken = localStorage.getItem('haziToken');
 
-// --- AUTH & INIT ---
 function checkAuth() {
     if (!userToken) window.location.href = 'index.html';
 }
-
-// Headers Helper
 const getHeaders = () => ({ 'Authorization': userToken, 'Content-Type': 'application/json' });
 
-// --- CORE FUNCTIONS ---
-
+// --- STATS & INIT ---
 async function loadSystemStats() {
     try {
         const res = await fetch(`${API_URL}/sys-stats`, { headers: { 'Authorization': userToken } });
@@ -23,21 +18,26 @@ async function loadSystemStats() {
         document.getElementById('cpu-val').innerText = data.cpu;
         document.getElementById('ram-val').innerText = data.memUsed;
         
-        // Handle Storage
-        if(data.storage && data.storage.length > 0) {
-            const disk = data.storage[0]; // Ambil disk pertama
-            document.getElementById('disk-val').innerText = `${disk.used} / ${disk.size}`;
-            document.getElementById('disk-bar').style.width = disk.percent;
-            document.getElementById('disk-name').innerText = disk.mount;
+        // Cek Storage Aktif
+        const activeRes = await fetch(`${API_URL}/active-storage`, { headers: { 'Authorization': userToken } });
+        const activeData = await activeRes.json();
+        const activePath = activeData.path;
+
+        // Cari disk yang sesuai dengan path aktif
+        const activeDisk = data.storage.find(d => activePath.startsWith(d.mount)) || data.storage[0];
+        
+        if(activeDisk) {
+            document.getElementById('disk-val').innerText = `${activeDisk.used} / ${activeDisk.size}`;
+            document.getElementById('disk-bar').style.width = activeDisk.percent;
+            document.getElementById('disk-name').innerText = activeDisk.mount;
         }
     } catch(e) { console.error(e); }
 }
 
+// --- FILE MANAGER ---
 async function loadFiles(path = "") {
     currentPath = path;
-    const displayPath = path ? `/${path}` : '/Home';
-    document.getElementById('path-display').innerText = displayPath;
-    
+    document.getElementById('path-display').innerText = path ? `/${path}` : '/Home';
     const container = document.getElementById('file-container');
     container.innerHTML = '<div style="text-align:center; padding:20px; color:#666">Loading...</div>';
 
@@ -57,10 +57,8 @@ async function loadFiles(path = "") {
             const iconClass = file.isDir ? 'fa-folder' : isPdf ? 'fa-file-pdf' : isImg ? 'fa-image' : 'fa-file';
             const itemClass = file.isDir ? 'is-dir' : isPdf ? 'is-pdf' : '';
             
-            // Logic Thumbnail
             let thumbContent = `<i class="fa-solid ${iconClass}"></i>`;
             if(isImg && !file.isDir) {
-                // Construct URL gambar langsung
                 const imgUrl = `/uploads/${path ? path + '/' : ''}${file.name}`;
                 thumbContent = `<img src="${imgUrl}" loading="lazy">`;
             }
@@ -69,180 +67,173 @@ async function loadFiles(path = "") {
             div.className = `file-item ${itemClass}`;
             div.innerHTML = `
                 <div class="file-thumb">${thumbContent}</div>
-                <div class="file-meta">
-                    <div class="file-name">${file.name}</div>
-                    <div class="file-size">${file.size}</div>
-                </div>
-                <div onclick="openMenu(event, '${file.name}', ${file.isDir})" style="padding:10px; cursor: pointer;"><i class="fa-solid fa-ellipsis-vertical"></i></div>
+                <div class="file-meta"><div class="file-name">${file.name}</div><div class="file-size">${file.size}</div></div>
+                <div class="file-opt" style="padding:10px; cursor:pointer"><i class="fa-solid fa-ellipsis-vertical"></i></div>
             `;
 
-            // Click: Buka Folder / Preview File
             div.onclick = (e) => {
-                // Jangan trigger jika yang diklik adalah tombol menu titik tiga
-                if(e.target.closest('.fa-ellipsis-vertical')) return;
-                
-                if(file.isDir) {
-                    loadFiles(path ? `${path}/${file.name}` : file.name);
-                } else {
-                    previewFile(file.name);
-                }
+                if(e.target.closest('.file-opt')) return openMenu(e, file.name, file.isDir);
+                if(file.isDir) loadFiles(path ? `${path}/${file.name}` : file.name);
+                else previewFile(file.name);
             };
 
-            // Long Press untuk Mobile / Klik Kanan (Context Menu)
             div.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
                 openMenu(e, file.name, file.isDir);
             });
-
             container.appendChild(div);
         });
     } catch(e) { console.error(e); }
 }
 
-// --- ACTIONS ---
-
+// --- UPLOAD WITH PROGRESS ---
 async function uploadFile() {
     const input = document.getElementById('hidden-upload');
-    input.value = ''; // Reset agar bisa pilih file yang sama
+    input.value = ''; 
     input.click();
     
-    input.onchange = async () => {
+    input.onchange = () => {
         const file = input.files[0];
         if(!file) return;
 
+        const modal = document.getElementById('upload-modal');
+        const bar = document.getElementById('upload-bar');
+        const percentTxt = document.getElementById('upload-percent');
+        const nameTxt = document.getElementById('upload-filename');
+        
+        modal.classList.remove('hidden');
+        nameTxt.innerText = file.name;
+        bar.style.width = '0%';
+        percentTxt.innerText = '0%';
+
         const formData = new FormData();
-        // [FIX] Masukkan Path DULUAN sebelum File agar terbaca oleh Multer
-        formData.append('path', currentPath); 
+        formData.append('path', currentPath); // Path first
         formData.append('file', file);
 
-        const btn = document.querySelector('.fab-add');
-        const originalIcon = btn.innerHTML;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; // Loading
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', `${API_URL}/upload`, true);
+        xhr.setRequestHeader('Authorization', userToken);
 
-        try {
-            const res = await fetch(`${API_URL}/upload`, { 
-                method: 'POST', 
-                headers: { 'Authorization': userToken },
-                body: formData 
-            });
-            
-            if(res.ok) {
-                loadFiles(currentPath); // Refresh folder saat ini
-            } else {
-                alert("Upload Failed");
+        xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+                const percent = Math.round((e.loaded / e.total) * 100);
+                bar.style.width = percent + '%';
+                percentTxt.innerText = percent + '%';
             }
-        } catch(e) { 
-            alert("Network Error during upload"); 
-        }
-        finally { 
-            btn.innerHTML = originalIcon; // Balikin icon
-            input.value = ''; 
-        }
+        };
+        xhr.onload = () => {
+            modal.classList.add('hidden');
+            if (xhr.status === 200) loadFiles(currentPath);
+            else alert("Upload Gagal");
+        };
+        xhr.onerror = () => { modal.classList.add('hidden'); alert("Network Error"); };
+        xhr.send(formData);
     };
 }
 
+// --- STORAGE MANAGER ---
+async function openStorageSettings() {
+    const modal = document.getElementById('storage-modal');
+    const list = document.getElementById('storage-list');
+    modal.classList.remove('hidden');
+    list.innerHTML = '<p>Scanning...</p>';
+
+    try {
+        const res = await fetch(`${API_URL}/sys-stats`, { headers: {'Authorization': userToken} });
+        const data = await res.json();
+        const activeRes = await fetch(`${API_URL}/active-storage`, { headers: {'Authorization': userToken} });
+        const activeData = await activeRes.json();
+
+        list.innerHTML = '';
+        data.storage.forEach(disk => {
+            const isActive = activeData.path.startsWith(disk.mount);
+            const border = isActive ? '2px solid var(--primary)' : '1px solid var(--border)';
+            
+            const div = document.createElement('div');
+            div.style.cssText = `background:var(--bg-deep); border:${border}; padding:10px; border-radius:8px; cursor:pointer;`;
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between; font-weight:bold; color:var(--text-main)">
+                    ${disk.mount} ${isActive ? '<i class="fa-solid fa-check" style="color:var(--primary)"></i>' : ''}
+                </div>
+                <div style="font-size:0.8rem; color:#888; margin-top:5px;">Size: ${disk.size} | Free: ${disk.avail}</div>
+            `;
+            if(!isActive) div.onclick = () => {
+                if(confirm(`Switch storage to ${disk.mount}?`)) setStorage(disk.mount);
+            };
+            list.appendChild(div);
+        });
+    } catch(e) { console.error(e); }
+}
+
+async function setStorage(path) {
+    try {
+        const res = await fetch(`${API_URL}/set-storage`, {
+            method: 'POST', headers: getHeaders(), body: JSON.stringify({ newPath: path })
+        });
+        if(res.ok) {
+            alert("Storage Changed!");
+            document.getElementById('storage-modal').classList.add('hidden');
+            loadFiles(''); 
+            loadSystemStats();
+        } else alert("Failed to change storage");
+    } catch(e) { alert("Error"); }
+}
+
+// --- FOLDER & MENU ---
 async function createFolder() {
     const name = prompt("Folder Name:");
     if(!name) return;
-    
-    // Path Relatif Penuh
     const fullPath = currentPath ? `${currentPath}/${name}` : name;
-    
-    await fetch(`${API_URL}/create-folder`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify({ folderName: fullPath })
-    });
+    await fetch(`${API_URL}/create-folder`, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ folderName: fullPath }) });
     loadFiles(currentPath);
 }
 
-// --- CONTEXT MENU LOGIC ---
 const ctxMenu = document.getElementById('ctx-menu');
-
 function openMenu(e, name, isDir) {
-    e.preventDefault();
-    e.stopPropagation();
+    e.preventDefault(); e.stopPropagation();
     selectedItem = { name, isDir, fullPath: currentPath ? `${currentPath}/${name}` : name };
-    
-    // Posisi Menu
-    let x = e.clientX; 
-    let y = e.clientY;
-    
-    // Fix overflow di layar HP (supaya menu gak kepotong)
+    let x = e.clientX, y = e.clientY;
     if(x + 180 > window.innerWidth) x = window.innerWidth - 190;
     if(y + 150 > window.innerHeight) y = window.innerHeight - 160;
-    
-    ctxMenu.style.top = `${y}px`;
-    ctxMenu.style.left = `${x}px`;
+    ctxMenu.style.top = `${y}px`; ctxMenu.style.left = `${x}px`;
     ctxMenu.classList.remove('hidden');
 }
-
-// Tutup menu kalau klik di tempat lain
 document.addEventListener('click', () => ctxMenu.classList.add('hidden'));
 
-// Aksi Menu
 async function menuAction(action) {
     if(!selectedItem) return;
-    
     if(action === 'download') {
-        // Trigger download via link hidden
         const link = document.createElement('a');
         link.href = `/uploads/${selectedItem.fullPath}`;
-        link.setAttribute('download', selectedItem.name); // Paksa atribut download
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        link.setAttribute('download', selectedItem.name);
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
     }
-    
     if(action === 'rename') {
-        const newName = prompt("Rename to:", selectedItem.name);
+        const newName = prompt("Rename:", selectedItem.name);
         if(newName && newName !== selectedItem.name) {
-            await fetch(`${API_URL}/rename`, {
-                method: 'POST', headers: getHeaders(),
-                body: JSON.stringify({ oldPath: selectedItem.fullPath, newName })
-            });
+            await fetch(`${API_URL}/rename`, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ oldPath: selectedItem.fullPath, newName }) });
             loadFiles(currentPath);
         }
     }
-    
     if(action === 'delete') {
-        if(confirm(`Permanently delete ${selectedItem.name}?`)) {
-            await fetch(`${API_URL}/delete`, {
-                method: 'POST', headers: getHeaders(),
-                body: JSON.stringify({ target: selectedItem.fullPath })
-            });
+        if(confirm(`Delete ${selectedItem.name}?`)) {
+            await fetch(`${API_URL}/delete`, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ target: selectedItem.fullPath }) });
             loadFiles(currentPath);
         }
     }
     ctxMenu.classList.add('hidden');
 }
 
-// --- NAVIGASI ---
 function goUp() {
-    if(!currentPath) return; // Sudah di root
-    const parts = currentPath.split('/');
-    parts.pop(); // Buang folder terakhir
+    if(!currentPath) return;
+    const parts = currentPath.split('/'); parts.pop();
     loadFiles(parts.join('/'));
 }
+function logout() { if(confirm("Logout?")) { localStorage.removeItem('haziToken'); window.location.href = 'index.html'; } }
+function previewFile(name) { window.open(`/uploads/${currentPath ? currentPath + '/' : ''}${name}`, '_blank'); }
 
-function logout() {
-    if(confirm("Logout from system?")) {
-        localStorage.removeItem('haziToken');
-        window.location.href = 'index.html';
-    }
+// --- RUN ---
+if(window.location.pathname.includes('dashboard')) {
+    checkAuth(); loadSystemStats(); loadFiles();
+    setInterval(loadSystemStats, 10000);
 }
-
-function previewFile(name) {
-    const url = `/uploads/${currentPath ? currentPath + '/' : ''}${name}`;
-    window.open(url, '_blank');
-}
-
-// --- AUTO RUN ---
-// Cek jika kita berada di dashboard
-if(window.location.pathname.endsWith('dashboard.html') || window.location.pathname.endsWith('dashboard')) {
-    checkAuth();
-    loadSystemStats();
-    loadFiles(); // Load root saat pertama buka
-    setInterval(loadSystemStats, 10000); // Auto refresh stats
-                }
-                      
