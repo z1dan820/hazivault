@@ -13,50 +13,25 @@
             <img src="/images/hazi.png" alt="HaziVault" class="logo-lg">
             <h2>Welcome Back</h2>
             <p>Secure Access Point</p>
-
             <form id="loginForm">
-                <div class="input-box">
-                    <i class="fa-solid fa-user"></i>
-                    <input type="text" id="username" placeholder="Username" required>
-                </div>
-                <div class="input-box">
-                    <i class="fa-solid fa-lock"></i>
-                    <input type="password" id="password" placeholder="Password" required>
-                </div>
-                <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:10px;">
-                    ACCESS SYSTEM
-                </button>
+                <div class="input-box"><i class="fa-solid fa-user"></i><input type="text" id="username" placeholder="Username" required></div>
+                <div class="input-box"><i class="fa-solid fa-lock"></i><input type="password" id="password" placeholder="Password" required></div>
+                <button type="submit" class="btn btn-primary" style="width:100%; margin-top:10px;">ACCESS SYSTEM</button>
             </form>
             <p style="margin-top:20px;">First time? <a href="setup.html" style="color:var(--primary)">Setup Admin</a></p>
         </div>
     </div>
-
     <script>
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const u = document.getElementById('username').value;
-            const p = document.getElementById('password').value;
-            const btn = document.querySelector('button');
-            
-            btn.innerHTML = 'Verifying...';
+            const u = document.getElementById('username').value, p = document.getElementById('password').value;
             try {
-                const res = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ username: u, password: p })
-                });
+                const res = await fetch('/api/login', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({username: u, password: p}) });
                 const data = await res.json();
-                
-                if(res.ok) {
-                    localStorage.setItem('haziToken', data.token);
-                    window.location.href = 'dashboard.html';
-                } else {
-                    alert(data.error);
-                    btn.innerHTML = 'ACCESS SYSTEM';
-                }
-            } catch(e) { alert("Connection Error"); }
+                if(res.ok) { localStorage.setItem('haziToken', data.token); window.location.href = 'dashboard.html'; } 
+                else alert(data.error);
+            } catch(e) { alert("Error"); }
         });
     </script>
 </body>
 </html>
-
