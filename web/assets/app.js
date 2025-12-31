@@ -9,15 +9,19 @@ let selectedFiles = [];
 function checkAuth() { if (!userToken) window.location.href = 'index.html'; }
 const getHeaders = () => ({ 'Authorization': userToken, 'Content-Type': 'application/json' });
 
+// --- STATS ---
 async function loadSystemStats() {
     try {
         const res = await fetch(`${API_URL}/sys-stats`, { headers: { 'Authorization': userToken } });
         if(res.status === 401) return logout();
         const data = await res.json();
+        
         document.getElementById('cpu-val').innerText = data.cpu;
         document.getElementById('ram-val').innerText = data.memUsed;
+        
         const activeRes = await fetch(`${API_URL}/active-storage`, { headers: { 'Authorization': userToken } });
         const activeData = await activeRes.json();
+        
         const activeDisk = data.storage.find(d => activeData.path.startsWith(d.mount)) || data.storage[0];
         if(activeDisk) {
             document.getElementById('disk-val').innerText = `${activeDisk.used} / ${activeDisk.size}`;
@@ -27,6 +31,61 @@ async function loadSystemStats() {
     } catch(e) { console.error(e); }
 }
 
+// --- SMART THUMBNAIL GENERATOR ---
+function getFileIcon(file, path) {
+    if (file.isDir) {
+        return `<i class="fa-solid fa-folder"></i>`;
+    }
+
+    const ext = file.type.toLowerCase();
+    const url = `/uploads/${path ? path + '/' : ''}${file.name}`;
+
+    // 1. Image: Thumbnail Asli
+    if (['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp'].includes(ext)) {
+        return `<img src="${url}" loading="lazy" alt="img">`;
+    }
+
+    // 2. Video: Frame Awal (Native Browser Trick)
+    // #t=0.1 memaksa browser mengambil frame detik ke-0.1
+    if (['.mp4', '.webm', '.ogg', '.mov'].includes(ext)) {
+        return `<video src="${url}#t=0.1" preload="metadata" muted></video>`;
+    }
+
+    // 3. Audio (Ungu)
+    if (['.mp3', '.wav', '.aac', '.flac'].includes(ext)) {
+        return `<i class="fa-solid fa-file-audio" style="color: #9b59b6;"></i>`;
+    }
+
+    // 4. PDF (Merah)
+    if (ext === '.pdf') {
+        return `<i class="fa-solid fa-file-pdf" style="color: #e74c3c;"></i>`;
+    }
+
+    // 5. Word / Text (Biru)
+    if (['.doc', '.docx', '.txt', '.md', '.rtf'].includes(ext)) {
+        return `<i class="fa-solid fa-file-word" style="color: #3498db;"></i>`;
+    }
+
+    // 6. Excel (Hijau)
+    if (['.xls', '.xlsx', '.csv'].includes(ext)) {
+        return `<i class="fa-solid fa-file-excel" style="color: #2ecc71;"></i>`;
+    }
+
+    // 7. Zip / Archive (Oranye)
+    if (['.zip', '.rar', '.7z', '.tar', '.gz'].includes(ext)) {
+        return `<i class="fa-solid fa-file-zipper" style="color: #f39c12;"></i>`;
+    }
+
+    // 8. Code (Abu-abu)
+    if (['.js', '.html', '.css', '.json', '.py', '.php'].includes(ext)) {
+        return `<i class="fa-solid fa-file-code" style="color: #95a5a6;"></i>`;
+    }
+
+    // Default
+    return `<i class="fa-solid fa-file" style="color: #7f8c8d;"></i>`;
+}
+
+// --- FILE LIST ---
 async function loadFiles(path = "") {
     exitSelectionMode();
     currentPath = path;
@@ -37,6 +96,7 @@ async function loadFiles(path = "") {
     try {
         const res = await fetch(`${API_URL}/files?path=${encodeURIComponent(path)}`, { headers: { 'Authorization': userToken } });
         const files = await res.json();
+        
         container.innerHTML = '';
         if(files.length === 0) {
             container.innerHTML = '<div style="text-align:center; padding:40px; color:#444"><i class="fa-regular fa-folder-open" style="font-size:2rem; margin-bottom:10px"></i><br>Empty Folder</div>';
@@ -44,26 +104,23 @@ async function loadFiles(path = "") {
         }
 
         files.forEach(file => {
-            const isImg = ['.jpg','.jpeg','.png','.gif','.webp'].includes(file.type);
-            const isPdf = file.type === '.pdf';
-            const iconClass = file.isDir ? 'fa-folder' : isPdf ? 'fa-file-pdf' : isImg ? 'fa-image' : 'fa-file';
-            const itemClass = file.isDir ? 'is-dir' : isPdf ? 'is-pdf' : '';
-            
-            let thumbContent = `<i class="fa-solid ${iconClass}"></i>`;
-            if(isImg && !file.isDir) {
-                const imgUrl = `/uploads/${path ? path + '/' : ''}${file.name}`;
-                thumbContent = `<img src="${imgUrl}" loading="lazy">`;
-            }
+            // Gunakan Fungsi Smart Thumbnail
+            const thumbContent = getFileIcon(file, path);
+            const itemClass = file.isDir ? 'is-dir' : '';
 
             const div = document.createElement('div');
             div.className = `file-item ${itemClass}`;
             div.dataset.name = file.name;
             div.innerHTML = `
                 <div class="file-thumb">${thumbContent}</div>
-                <div class="file-meta"><div class="file-name">${file.name}</div><div class="file-size">${file.size}</div></div>
+                <div class="file-meta">
+                    <div class="file-name">${file.name}</div>
+                    <div class="file-size">${file.size}</div>
+                </div>
                 <div class="file-opt" style="padding:10px; cursor:pointer"><i class="fa-solid fa-ellipsis-vertical"></i></div>
             `;
 
+            // Click Logic
             div.onclick = (e) => {
                 if(isSelectionMode) toggleSelection(div, file.name);
                 else {
@@ -72,6 +129,8 @@ async function loadFiles(path = "") {
                     else previewFile(file.name);
                 }
             };
+
+            // Long Press / Right Click
             div.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
                 if(!isSelectionMode) { enterSelectionMode(); toggleSelection(div, file.name); }
@@ -82,6 +141,7 @@ async function loadFiles(path = "") {
     } catch(e) { console.error(e); }
 }
 
+// --- SELECTION FUNCTIONS ---
 function enterSelectionMode() {
     isSelectionMode = true;
     document.body.classList.add('selecting');
@@ -118,6 +178,7 @@ function selectAll() {
 }
 function updateBulkUI() { document.getElementById('selected-count').innerText = selectedFiles.length; }
 
+// --- BULK ACTIONS ---
 async function bulkDelete() {
     if(!confirm(`Delete ${selectedFiles.length} items?`)) return;
     await fetch(`${API_URL}/bulk-delete`, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ targets: selectedFiles }) });
@@ -131,6 +192,7 @@ async function bulkDownload() {
     }, i * 500));
 }
 
+// --- UPLOAD MULTIPLE ---
 async function uploadFile() {
     const input = document.getElementById('hidden-upload');
     input.value = ''; input.click();
@@ -161,6 +223,7 @@ async function uploadFile() {
     };
 }
 
+// --- STORAGE & SETTINGS ---
 async function openStorageSettings() {
     const modal = document.getElementById('storage-modal');
     const list = document.getElementById('storage-list');
@@ -194,6 +257,7 @@ async function createFolder() {
     loadFiles(currentPath);
 }
 
+// --- CONTEXT MENU ---
 const ctxMenu = document.getElementById('ctx-menu');
 function openMenu(e, name, isDir) {
     e.preventDefault(); e.stopPropagation();
@@ -205,6 +269,7 @@ function openMenu(e, name, isDir) {
     ctxMenu.classList.remove('hidden');
 }
 document.addEventListener('click', () => ctxMenu.classList.add('hidden'));
+
 async function menuAction(action) {
     if(!selectedItem) return;
     if(action === 'download') { const link = document.createElement('a'); link.href = `/uploads/${selectedItem.fullPath}`; link.setAttribute('download', selectedItem.name); document.body.appendChild(link); link.click(); document.body.removeChild(link); }
@@ -212,8 +277,12 @@ async function menuAction(action) {
     if(action === 'delete') { if(confirm(`Delete ${selectedItem.name}?`)) { await fetch(`${API_URL}/delete`, { method: 'POST', headers: getHeaders(), body: JSON.stringify({ target: selectedItem.fullPath }) }); loadFiles(currentPath); } }
     ctxMenu.classList.add('hidden');
 }
+
 function goUp() { if(!currentPath) return; const parts = currentPath.split('/'); parts.pop(); loadFiles(parts.join('/')); }
 function logout() { if(confirm("Logout?")) { localStorage.removeItem('haziToken'); window.location.href = 'index.html'; } }
 function previewFile(name) { window.open(`/uploads/${currentPath ? currentPath + '/' : ''}${name}`, '_blank'); }
 
-if(window.location.pathname.includes('dashboard')) { checkAuth(); loadSystemStats(); loadFiles(); setInterval(loadSystemStats, 10000); }
+// Run
+if(window.location.pathname.includes('dashboard')) {
+    checkAuth(); loadSystemStats(); loadFiles(); setInterval(loadSystemStats, 10000);
+}
