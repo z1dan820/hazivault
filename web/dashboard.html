@@ -2,91 +2,63 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HaziVault // Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HaziVault Dashboard</title>
     <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
-    <div class="sidebar">
-        <div class="logo-area">
-            <img src="/images/hazi.png" alt="HaziVault">
-            <span>HAZI_VAULT</span>
+    <header class="app-header">
+        <div class="brand">
+            <img src="/images/hazi.png" alt="Logo">
+            HAZIVAULT
         </div>
-        <br>
-        <div style="margin-bottom: 20px;">
-            <button onclick="logout()" class="btn-sm" style="width:100%">[LOGOUT SYSTEM]</button>
+        <div style="font-size:0.8rem; color:var(--text-muted)">PRO</div>
+    </header>
+
+    <div class="main-scroll">
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <label id="disk-name">STORAGE</label>
+                <div class="val" id="disk-val">-- / --</div>
+                <div class="progress-bg"><div class="progress-fill" id="disk-bar"></div></div>
+            </div>
+            <div class="metric-card">
+                <label>SYSTEM LOAD</label>
+                <div class="val" id="cpu-val">--%</div>
+                <div style="font-size:0.75rem; color:#888" id="ram-val">RAM: --</div>
+            </div>
         </div>
-        
-        <div id="storage-container">
-            <small>INITIALIZING SENSORS...</small>
+
+        <div class="section-head">
+            <h3>Files</h3>
+            <div id="path-display" class="path-crumb">/Home</div>
         </div>
+
+        <div id="file-container" class="file-list">
+            </div>
     </div>
 
-    <div class="main-content">
-        <div class="header">
-            <h2>// FILE_COMMAND_CENTER</h2>
-            <div id="user-display">USER: ...</div>
-        </div>
-
-        <div class="card">
-             <h3>>> CREATE_DIRECTORY</h3>
-             <form id="createFolderForm" class="flex-form">
-                 <input type="text" id="folderNameInput" placeholder="NEW FOLDER NAME..." required autocomplete="off">
-                 <button type="submit">CREATE</button>
-             </form>
-        </div>
-
-        <div class="card">
-            <h3>>> UPLOAD_PROTOCOL</h3>
-            <form id="uploadForm" class="flex-form">
-                <input type="file" id="fileInput" name="file" required>
-                <button type="submit">INITIATE UPLOAD</button>
-            </form>
-            <div id="uploadProgress" style="display:none; margin-top:10px;">
-                 <div class="storage-bar"><div id="uploadBar" class="storage-fill" style="width:0%"></div></div>
-                 <small id="uploadStatus" style="color: var(--accent);">Uploading...</small>
-            </div>
-        </div>
-
-        <div class="card" style="padding-top:0">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin: 15px 0;">
-                <h3>>> DATA_INDEX</h3>
-                <button class="btn-sm" onclick="loadFiles()">[REFRESH DATA]</button>
-            </div>
-            
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>NAME</th>
-                            <th>SIZE</th>
-                            <th>TYPE</th>
-                            <th>ACTIONS</th>
-                        </tr>
-                    </thead>
-                    <tbody id="fileList">
-                        <tr><td colspan="4" style="text-align:center">SCANNING...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+    <div class="fab-add" onclick="uploadFile()">
+        <i class="fa-solid fa-plus"></i>
     </div>
+    <input type="file" id="hidden-upload" class="hidden">
 
-    <div id="previewModal" onclick="if(event.target === this) closePreview()">
-        <span class="close-modal" onclick="closePreview()">&times;</span>
-        <div id="previewContainer"></div>
+    <nav class="bottom-nav">
+        <button class="nav-btn active" onclick="loadFiles('')"><i class="fa-solid fa-house"></i>Home</button>
+        <button class="nav-btn" onclick="goUp()"><i class="fa-solid fa-turn-up"></i>Up</button>
+        <button class="nav-btn" onclick="createFolder()"><i class="fa-solid fa-folder-plus"></i>New Folder</button>
+        <button class="nav-btn" onclick="logout()" style="color:var(--danger)"><i class="fa-solid fa-power-off"></i>Logout</button>
+    </nav>
+
+    <div id="ctx-menu" class="context-menu hidden">
+        <div class="ctx-item" onclick="menuAction('download')"><i class="fa-solid fa-download"></i> Download</div>
+        <div class="ctx-item" onclick="menuAction('rename')"><i class="fa-solid fa-pen"></i> Rename</div>
+        <div class="ctx-item ctx-delete" onclick="menuAction('delete')"><i class="fa-solid fa-trash"></i> Delete</div>
     </div>
 
     <script src="assets/app.js"></script>
-    <script>
-        // Init Dashboard
-        document.addEventListener('DOMContentLoaded', () => {
-            checkAuth(); // Cek auth dulu
-            loadStorage();
-            loadFiles();
-        });
-    </script>
 </body>
 </html>
 
