@@ -49,3 +49,11 @@ Ikuti langkah-langkah ini untuk menginstal HaziVault di perangkat Anda:
 git clone [https://github.com/z1dan820/hazivault.git](https://github.com/z1dan820/hazivault.git)
 cd hazivault
 ```
+**2. Install Depedensi**
+```bash
+npm install
+```
+**3. Jalankan HaziVault**
+```bash
+npm start
+```
