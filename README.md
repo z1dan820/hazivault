@@ -5,6 +5,10 @@
 Versi 3.0 hadir dengan antarmuka pengguna (UI) bertema **Emerald Dark Premium** yang segar, peningkatan keamanan, dan fitur manajemen file tingkat lanjut.
 
 ---
+# ![Dokumentasi](images/ss1.png)
+# ![Dokumentasi](images/ss2.png)
+# ![Dokumentasi](images/ss3.png)
+
 
 ## 🔥 Fitur Utama v3.0
 
