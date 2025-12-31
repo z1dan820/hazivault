@@ -8,13 +8,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-
     <header class="app-header">
-        <div class="brand">
-            <img src="/images/hazi.png" alt="Logo">
-        
-        </div>
-        <div style="font-size:0.8rem; color:var(--text-muted)">PRO</div>
+        <div class="brand"><img src="/images/hazi.png" alt="Logo">HAZIVAULT</div>
+        <button class="nav-btn" onclick="openStorageSettings()" style="background:none; border:none; color:white;"><i class="fa-solid fa-hard-drive"></i></button>
     </header>
 
     <div class="main-scroll">
@@ -35,20 +31,16 @@
             <h3>Files</h3>
             <div id="path-display" class="path-crumb">/Home</div>
         </div>
-
-        <div id="file-container" class="file-list">
-            </div>
+        <div id="file-container" class="file-list"></div>
     </div>
 
-    <div class="fab-add" onclick="uploadFile()">
-        <i class="fa-solid fa-plus"></i>
-    </div>
+    <div class="fab-add" onclick="uploadFile()"><i class="fa-solid fa-plus"></i></div>
     <input type="file" id="hidden-upload" class="hidden">
 
     <nav class="bottom-nav">
         <button class="nav-btn active" onclick="loadFiles('')"><i class="fa-solid fa-house"></i>Home</button>
         <button class="nav-btn" onclick="goUp()"><i class="fa-solid fa-turn-up"></i>Up</button>
-        <button class="nav-btn" onclick="createFolder()"><i class="fa-solid fa-folder-plus"></i>New Folder</button>
+        <button class="nav-btn" onclick="createFolder()"><i class="fa-solid fa-folder-plus"></i>New</button>
         <button class="nav-btn" onclick="logout()" style="color:var(--danger)"><i class="fa-solid fa-power-off"></i>Logout</button>
     </nav>
 
@@ -58,7 +50,19 @@
         <div class="ctx-item ctx-delete" onclick="menuAction('delete')"><i class="fa-solid fa-trash"></i> Delete</div>
     </div>
 
+    <div id="upload-modal" class="context-menu hidden" style="position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width:300px; text-align:center; padding:20px; z-index:2000;">
+        <h4 style="margin-bottom:15px; color:var(--text-main)">Uploading...</h4>
+        <div class="progress-bg" style="height:10px; background:#333;"><div id="upload-bar" class="progress-fill" style="width:0%"></div></div>
+        <div id="upload-percent" style="margin-top:10px; font-weight:bold; color:var(--primary)">0%</div>
+        <small id="upload-filename" style="color:#888; display:block; margin-top:5px;">filename</small>
+    </div>
+
+    <div id="storage-modal" class="context-menu hidden" style="position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width:90%; max-width:400px; padding:20px; z-index:2000;">
+        <h3 style="margin-bottom:15px; color:var(--primary)">Select Storage</h3>
+        <div id="storage-list" style="display:flex; flex-direction:column; gap:10px; max-height:300px; overflow-y:auto;"></div>
+        <button onclick="document.getElementById('storage-modal').classList.add('hidden')" class="btn btn-danger" style="width:100%; margin-top:15px;">Close</button>
+    </div>
+
     <script src="assets/app.js"></script>
 </body>
 </html>
-
