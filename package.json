@@ -1,18 +1,18 @@
-
 {
   "name": "hazivault",
-  "version": "1.0.0",
-  "description": "Lightweight NAS System for Armbian/Termux",
+  "version": "2.0.0",
+  "description": "Secure NAS System",
   "main": "server/index.js",
   "scripts": {
-    "start": "node server/index.js",
-    "dev": "nodemon server/index.js"
+    "start": "node server/index.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "express": "^4.18.2",
+    "mime-types": "^2.1.35",
     "multer": "^1.4.5-lts.1",
     "sqlite3": "^5.1.6"
   }
 }
+
