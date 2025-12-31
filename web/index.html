@@ -3,25 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HaziVault // Login</title>
+    <title>Login - HaziVault</title>
     <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="auth-container">
-        <div class="auth-box">
-            <img src="/images/hazi.png" alt="Logo" style="width:60px; margin-bottom:20px;">
-            <h2>HAZI_VAULT</h2>
-            <p style="font-size: 0.8rem; color: #888; margin-bottom: 20px;">SECURE STORAGE SYSTEM</p>
-            
+    <div class="auth-wrapper">
+        <div class="auth-card">
+            <img src="/images/hazi.png" alt="HaziVault" class="logo-lg">
+            <h2>Welcome Back</h2>
+            <p>Secure Access Point</p>
+
             <form id="loginForm">
-                <input type="text" id="username" placeholder="USERNAME" required>
-                <input type="password" id="password" placeholder="PASSWORD" required>
-                <button type="submit">ACCESS SYSTEM</button>
+                <div class="input-box">
+                    <i class="fa-solid fa-user"></i>
+                    <input type="text" id="username" placeholder="Username" required>
+                </div>
+                <div class="input-box">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="password" placeholder="Password" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:10px;">
+                    ACCESS SYSTEM
+                </button>
             </form>
-            <p id="msg" style="margin-top:10px; color: red; font-size: 0.8rem;"></p>
-            <p style="margin-top: 20px; font-size: 0.7rem;">
-                Don't have an account? <a href="setup.html" style="color: var(--accent)">Setup Here</a>
-            </p>
+            <p style="margin-top:20px;">First time? <a href="setup.html" style="color:var(--primary)">Setup Admin</a></p>
         </div>
     </div>
 
@@ -30,21 +36,27 @@
             e.preventDefault();
             const u = document.getElementById('username').value;
             const p = document.getElementById('password').value;
-
-            const res = await fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: u, password: p })
-            });
-
-            const data = await res.json();
-            if (res.ok) {
-                localStorage.setItem('haziUser', JSON.stringify(data.user));
-                window.location.href = 'dashboard.html';
-            } else {
-                document.getElementById('msg').innerText = "ACCESS DENIED";
-            }
+            const btn = document.querySelector('button');
+            
+            btn.innerHTML = 'Verifying...';
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ username: u, password: p })
+                });
+                const data = await res.json();
+                
+                if(res.ok) {
+                    localStorage.setItem('haziToken', data.token);
+                    window.location.href = 'dashboard.html';
+                } else {
+                    alert(data.error);
+                    btn.innerHTML = 'ACCESS SYSTEM';
+                }
+            } catch(e) { alert("Connection Error"); }
         });
     </script>
 </body>
 </html>
+
