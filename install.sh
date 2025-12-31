@@ -50,12 +50,12 @@ if [ -d "$TARGET_DIR" ]; then
     cd $TARGET_DIR
     git pull
 else
-    git clone https://github.com/z1dan820/hazivault.git $TARGET_DIR
+    git clone https://github.com/z1dan820/hazivault.git cd hazivault/ #$TARGET_DIR
 fi
 
 # 3. Install Dependency Project
 echo -e "${BLUE}[3/5] Menginstall Library Project...${NC}"
-cd $TARGET_DIR
+#cd $TARGET_DIR
 npm install --production
 
 # 4. Install PM2 (Process Manager) Global
